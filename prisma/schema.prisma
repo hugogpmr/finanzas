@@ -106,7 +106,7 @@ enum InvestmentTxType {
 // ---------------------------------------------------------------------------
 
 model Account {
-  id             String       @id @default(uuid()) @db.Uuid
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId         String       @map("user_id") @db.Uuid
   name           String
   type           AccountType
@@ -129,7 +129,7 @@ model Account {
 }
 
 model Category {
-  id                String       @id @default(uuid()) @db.Uuid
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String       @map("user_id") @db.Uuid
   name              String
   parentId          String?      @map("parent_id") @db.Uuid
@@ -154,7 +154,7 @@ model Category {
 }
 
 model Tag {
-  id     String @id @default(uuid()) @db.Uuid
+  id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String @map("user_id") @db.Uuid
   name   String
 
@@ -176,7 +176,7 @@ model TransactionTag {
 }
 
 model Transaction {
-  id                String   @id @default(uuid()) @db.Uuid
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String   @map("user_id") @db.Uuid
   accountId         String   @map("account_id") @db.Uuid
   categoryId        String?  @map("category_id") @db.Uuid
@@ -207,7 +207,7 @@ model Transaction {
 }
 
 model TransactionSplit {
-  id            String  @id @default(uuid()) @db.Uuid
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   transactionId String  @map("transaction_id") @db.Uuid
   categoryId    String? @map("category_id") @db.Uuid
   amount        Decimal @db.Decimal(18, 2)
@@ -221,7 +221,7 @@ model TransactionSplit {
 }
 
 model CategorizationRule {
-  id         String                   @id @default(uuid()) @db.Uuid
+  id         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId     String                   @map("user_id") @db.Uuid
   matchType  CategorizationMatchType  @map("match_type")
   pattern    String
@@ -239,7 +239,7 @@ model CategorizationRule {
 // ---------------------------------------------------------------------------
 
 model Budget {
-  id          String       @id @default(uuid()) @db.Uuid
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId      String       @map("user_id") @db.Uuid
   name        String
   method      BudgetMethod
@@ -255,7 +255,7 @@ model Budget {
 }
 
 model BudgetLine {
-  id                String  @id @default(uuid()) @db.Uuid
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   budgetId          String  @map("budget_id") @db.Uuid
   categoryId        String  @map("category_id") @db.Uuid
   allocated         Decimal @db.Decimal(18, 2)
@@ -274,7 +274,7 @@ model BudgetLine {
 // ---------------------------------------------------------------------------
 
 model Goal {
-  id                  String    @id @default(uuid()) @db.Uuid
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId              String    @map("user_id") @db.Uuid
   name                String
   type                GoalType
@@ -297,7 +297,7 @@ model Goal {
 // ---------------------------------------------------------------------------
 
 model Debt {
-  id                String   @id @default(uuid()) @db.Uuid
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String   @map("user_id") @db.Uuid
   accountId         String?  @map("account_id") @db.Uuid
   name              String
@@ -319,7 +319,7 @@ model Debt {
 }
 
 model DebtPayment {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   debtId           String   @map("debt_id") @db.Uuid
   date             DateTime @db.Date
   amount           Decimal  @db.Decimal(18, 2)
@@ -337,7 +337,7 @@ model DebtPayment {
 // ---------------------------------------------------------------------------
 
 model Holding {
-  id              String     @id @default(uuid()) @db.Uuid
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId          String     @map("user_id") @db.Uuid
   accountId       String     @map("account_id") @db.Uuid
   ticker          String?
@@ -360,7 +360,7 @@ model Holding {
 }
 
 model InvestmentTransaction {
-  id           String            @id @default(uuid()) @db.Uuid
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId       String            @map("user_id") @db.Uuid
   holdingId    String            @map("holding_id") @db.Uuid
   accountId    String?           @map("account_id") @db.Uuid
@@ -382,7 +382,7 @@ model InvestmentTransaction {
 }
 
 model PriceSnapshot {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   holdingId   String   @map("holding_id") @db.Uuid
   date        DateTime @db.Date
   price       Decimal  @db.Decimal(18, 6)
@@ -399,7 +399,7 @@ model PriceSnapshot {
 // ---------------------------------------------------------------------------
 
 model NetWorthSnapshot {
-  id               String   @id @default(uuid()) @db.Uuid
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId           String   @map("user_id") @db.Uuid
   snapshotDate     DateTime @map("snapshot_date") @db.Date
   totalAssets      Decimal  @map("total_assets") @db.Decimal(18, 2)
@@ -417,7 +417,7 @@ model NetWorthSnapshot {
 // ---------------------------------------------------------------------------
 
 model FxRate {
-  id    String   @id @default(uuid()) @db.Uuid
+  id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   date  DateTime @db.Date
   base  String   @db.Char(3)
   quote String   @db.Char(3)

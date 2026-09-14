@@ -83,7 +83,11 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="type">Tipo</Label>
-            <Select name="type" defaultValue={account?.type ?? "checking"}>
+            <Select
+              name="type"
+              defaultValue={account?.type ?? "checking"}
+              items={ACCOUNT_TYPES.map(({ value, label }) => ({ value, label }))}
+            >
               <SelectTrigger id="type" className="w-full">
                 <SelectValue />
               </SelectTrigger>
