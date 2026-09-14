@@ -71,8 +71,7 @@ Sprint 0 casi cerrado:
 
 Sprint 1 en progreso:
 - ✅ CRUD de cuentas (`src/features/accounts`, `/cuentas`): crear, editar, eliminar,
-  agrupadas en Activos/Pasivos con subtotal. Pendiente de probar en producción con el
-  usuario real (Claude no tiene la contraseña para probarlo autenticado).
+  agrupadas en Activos/Pasivos con subtotal. Verificado en producción por el usuario.
 - ⬜ CRUD de transacciones con categorías jerárquicas y tags.
 - ⬜ Reglas de auto-categorización por comerciante.
 - ⬜ División de transacciones.
