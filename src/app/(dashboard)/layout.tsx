@@ -25,9 +25,12 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
+  // getSession() lee la cookie en local, sin llamar a Supabase por red.
+  // Vale para mostrar el email: la comprobación de seguridad ya la hizo
+  // src/proxy.ts con getUser() (que sí revalida contra el servidor).
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return (
     <SidebarProvider>
@@ -58,7 +61,7 @@ export default async function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="gap-2 px-3 py-3">
           <p className="truncate text-xs text-muted-foreground">
-            {user?.email}
+            {session?.user.email}
           </p>
           <form action={logout}>
             <Button
