@@ -28,6 +28,8 @@ Plan técnico completo (roadmap por sprints, fórmulas, esquema de datos detalla
 - **Lógica financiera pura y aislada** en `src/lib/finance/` (funciones puras, sin efectos secundarios, sin UI ni acceso a BD). Todo cálculo no trivial (XIRR, TWR, FIRE, simuladores de deuda) lleva test en `tests/` con casos conocidos.
 - Next.js 16 tiene cambios respecto a versiones anteriores — consultar `node_modules/next/dist/docs/` antes de asumir una API o convención de versiones previas (ver `AGENTS.md`). En concreto: el archivo de middleware se llama `proxy.ts` (no `middleware.ts`) y **debe vivir en `src/`** junto a `app/`, no en la raíz del proyecto — si se pone en la raíz, Next no lo detecta y las rutas quedan sin proteger sin avisar.
 - Autenticación: Supabase Auth vía `@supabase/ssr`. `src/lib/supabase/{client,server,middleware}.ts` son los tres clientes (browser, Server Components/Actions, proxy). `src/proxy.ts` protege todo lo que no esté en `/login`, `/registro` o `/auth`.
+- **Leer/escribir datos de usuario: siempre con el cliente de Supabase (`createClient()` de `src/lib/supabase/server.ts`), nunca con Prisma.** `DATABASE_URL` conecta como el rol `postgres` (dueño de las tablas), que **salta RLS** — usar Prisma para queries filtraría "por las buenas" pero no por diseño, y un olvido de `where: { userId }` filtraría datos de todos los usuarios. Prisma se queda solo para `schema.prisma` y migraciones. Los tipos de cada feature (p. ej. `src/features/accounts/types.ts`) se escriben a mano en snake_case porque así es como los devuelve PostgREST/supabase-js, no en camelCase como los modelos de Prisma.
+- `numeric` de Postgres llega desde supabase-js como **string**, no `number` (evita perder precisión) — convertir con `Number()` solo al formatear o calcular, nunca asumir que ya es numérico.
 
 ## Comandos
 
@@ -66,5 +68,12 @@ Sprint 0 casi cerrado:
   Flujo de registro + confirmación por email verificado de punta a punta en producción.
 - ⬜ Cron keep-alive de GitHub Actions (evita que Supabase pause el proyecto por inactividad).
 
-Con esto, el Sprint 0 está prácticamente cerrado. Siguiente: Sprint 1 (CRUD de cuentas y
-transacciones) — ver `docs/plan-tecnico.md` sección "Roadmap de desarrollo por sprints".
+Sprint 1 en progreso:
+- ✅ CRUD de cuentas (`src/features/accounts`, `/cuentas`): crear, editar, eliminar,
+  agrupadas en Activos/Pasivos con subtotal. Pendiente de probar en producción con el
+  usuario real (Claude no tiene la contraseña para probarlo autenticado).
+- ⬜ CRUD de transacciones con categorías jerárquicas y tags.
+- ⬜ Reglas de auto-categorización por comerciante.
+- ⬜ División de transacciones.
+- ⬜ Conversión de divisa (Frankfurter) y `amount_eur`.
+- ⬜ Detección básica de recurrentes.
