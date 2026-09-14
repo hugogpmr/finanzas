@@ -62,9 +62,9 @@ Sprint 0 casi cerrado:
 - ✅ Repo subido a GitHub, proyecto conectado y desplegado en Vercel.
 - ✅ Supabase Auth (login/registro) y proxy que protege `/dashboard`.
 - ✅ Layout base del dashboard con sidebar de shadcn/ui y logout.
-- ⬜ Configurar en el dashboard de Supabase (Authentication → URL Configuration) la Site URL
-  de producción y añadir `http://localhost:3000/**` a Redirect URLs, para que el enlace de
-  confirmación de email funcione tanto en local como en Vercel.
-- ⬜ Añadir `NEXT_PUBLIC_SITE_URL` a las variables de entorno de Vercel (valor: la URL de
-  producción, sin barra final).
+- ✅ Site URL/Redirect URLs configuradas en Supabase y `NEXT_PUBLIC_SITE_URL` en Vercel.
+  Flujo de registro + confirmación por email verificado de punta a punta en producción.
 - ⬜ Cron keep-alive de GitHub Actions (evita que Supabase pause el proyecto por inactividad).
+
+Con esto, el Sprint 0 está prácticamente cerrado. Siguiente: Sprint 1 (CRUD de cuentas y
+transacciones) — ver `docs/plan-tecnico.md` sección "Roadmap de desarrollo por sprints".
