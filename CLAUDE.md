@@ -26,7 +26,8 @@ Plan técnico completo (roadmap por sprints, fórmulas, esquema de datos detalla
 - **`service_role` key de Supabase JAMÁS en el cliente ni en el repo.** Solo `anon` key en el frontend. Todo secreto va en `.env` (ignorado por git; el CLI de Prisma solo lee `.env`, no `.env.local`, así que usamos `.env` para todo).
 - **Arquitectura por features** en `src/features/<feature>/`, no por tipo de archivo. Cada feature agrupa sus componentes, hooks y acciones.
 - **Lógica financiera pura y aislada** en `src/lib/finance/` (funciones puras, sin efectos secundarios, sin UI ni acceso a BD). Todo cálculo no trivial (XIRR, TWR, FIRE, simuladores de deuda) lleva test en `tests/` con casos conocidos.
-- Next.js 16 tiene cambios respecto a versiones anteriores — consultar `node_modules/next/dist/docs/` antes de asumir una API o convención de versiones previas (ver `AGENTS.md`).
+- Next.js 16 tiene cambios respecto a versiones anteriores — consultar `node_modules/next/dist/docs/` antes de asumir una API o convención de versiones previas (ver `AGENTS.md`). En concreto: el archivo de middleware se llama `proxy.ts` (no `middleware.ts`) y **debe vivir en `src/`** junto a `app/`, no en la raíz del proyecto — si se pone en la raíz, Next no lo detecta y las rutas quedan sin proteger sin avisar.
+- Autenticación: Supabase Auth vía `@supabase/ssr`. `src/lib/supabase/{client,server,middleware}.ts` son los tres clientes (browser, Server Components/Actions, proxy). `src/proxy.ts` protege todo lo que no esté en `/login`, `/registro` o `/auth`.
 
 ## Comandos
 
@@ -53,12 +54,17 @@ como referencia — policy `user_id = auth.uid()` para tablas con `user_id` prop
 
 ## Estado actual
 
-Sprint 0 en progreso:
+Sprint 0 casi cerrado:
 - ✅ Proyecto Next.js + Tailwind + shadcn/ui creado.
 - ✅ Cuentas de GitHub, Supabase y Vercel creadas por el usuario.
 - ✅ Esquema Prisma completo (`prisma/schema.prisma`) migrado a Supabase, con RLS activada
   en todas las tablas.
-- ⬜ Repo subido a GitHub, proyecto conectado en Vercel.
-- ⬜ Supabase Auth (login/registro) y middleware que protege rutas privadas.
-- ⬜ Layout base con sidebar de navegación.
+- ✅ Repo subido a GitHub, proyecto conectado y desplegado en Vercel.
+- ✅ Supabase Auth (login/registro) y proxy que protege `/dashboard`.
+- ✅ Layout base del dashboard con sidebar de shadcn/ui y logout.
+- ⬜ Configurar en el dashboard de Supabase (Authentication → URL Configuration) la Site URL
+  de producción y añadir `http://localhost:3000/**` a Redirect URLs, para que el enlace de
+  confirmación de email funcione tanto en local como en Vercel.
+- ⬜ Añadir `NEXT_PUBLIC_SITE_URL` a las variables de entorno de Vercel (valor: la URL de
+  producción, sin barra final).
 - ⬜ Cron keep-alive de GitHub Actions (evita que Supabase pause el proyecto por inactividad).
