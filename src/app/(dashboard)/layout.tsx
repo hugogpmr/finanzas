@@ -8,6 +8,7 @@ import {
   Tags,
   Target,
   TrendingUp,
+  Upload,
   Wallet,
   Wand2,
 } from "lucide-react";
@@ -106,6 +107,12 @@ export default async function DashboardLayout({
                   <SidebarMenuButton render={<Link href="/inversiones" />}>
                     <TrendingUp />
                     <span>Inversiones</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/importar" />}>
+                    <Upload />
+                    <span>Importar CSV</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

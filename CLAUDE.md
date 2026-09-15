@@ -113,38 +113,21 @@ Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`
 
 Sprint 3 completo — Presupuestos y objetivos (`src/features/budgets`,
 `src/features/goals`, `/presupuestos`, `/objetivos`):
-- ✅ `src/lib/transactions/attribution.ts` extrae el prorrateo de divisiones por
-  tipo de cambio (antes duplicado en el dashboard) a una función pura y
-  testeada, reutilizada por `src/lib/transactions/category-totals.ts` (gasto
-  por categoría en un rango de fechas, usado por presupuestos).
-- ✅ CRUD de presupuestos (`Budget`) y sus líneas (`BudgetLine`, una por
-  categoría). Solo un presupuesto puede estar activo a la vez: al crear uno
-  se desactivan los demás; también se puede reactivar uno desde el menú de
-  la fila. **El enum `BudgetMethod` de Postgres usa el valor real `50_30_20`**
-  (no `fifty_thirty_twenty`, que es solo el nombre que le da Prisma porque un
-  identificador no puede empezar por un número — ver `src/features/budgets/types.ts`).
+- ✅ `src/lib/transactions/attribution.ts` prorratea divisiones por tipo de
+  cambio (reutilizado por presupuestos y por el dashboard). CRUD de
+  presupuestos y líneas: solo uno activo a la vez. **El enum `BudgetMethod`
+  usa el valor real `50_30_20`**, no `fifty_thirty_twenty` (nombre de
+  Prisma: un identificador no puede empezar por un número).
 - ✅ `src/features/budgets/period.ts` calcula la ventana del periodo activo
-  (mes o semana que contiene hoy, no un rango fijo desde `start_date`).
-  El rollover ("sobres") solo mira **un** periodo hacia atrás, no acumula
-  histórico completo: `effectiveAllocated = allocated + max(0, allocated_anterior − gastado_anterior)`.
-- ✅ Alertas de límite: `alert_threshold_pct` por línea pinta la barra de
-  progreso en ámbar (cerca del límite) o rojo (superado) — sin envío de
-  email/push, es un MVP visual.
-- ✅ CRUD de objetivos (`Goal`): ahorro, fondo de emergencia o sinking fund.
-  Proyección lineal en `src/lib/finance/goals.ts` (`monthsToGoal`, sin
-  rentabilidad asumida, a diferencia de `yearsToFire` en `kpis.ts`).
-- ✅ Un objetivo con `linked_account_id` **no usa su `current_amount` guardado**:
-  el importe actual se calcula siempre a partir del saldo real de esa cuenta
-  (convertido a EUR), para no tener dos fuentes de verdad que se desincronicen
-  (ver `src/features/goals/queries.ts`). El diálogo oculta el campo manual
-  cuando hay cuenta enlazada.
-- ✅ Plantilla de fondo de emergencia: botón que pre-rellena el diálogo de
-  objetivo (6 meses de gasto esencial, reutilizando `avgEssentialMonthlyExpensesEur`
-  ya calculado por el dashboard del Sprint 2) en vez de pedir el dato otra vez.
-- 🐛 De paso se corrigió un bug real de Sprint 1/2: la fecha por defecto de una
-  transacción nueva y el rango de fechas del dashboard usaban
-  `toISOString().slice(0,10)`, que en España podía dar el día de ayer (ver la
-  nota en Convenciones sobre `src/lib/date.ts`).
+  (mes/semana que contiene hoy). El rollover solo mira **un** periodo atrás.
+  Alertas de límite pintan la barra en ámbar/rojo (visual, sin email/push).
+- ✅ CRUD de objetivos: uno con `linked_account_id` usa siempre el saldo real
+  de esa cuenta como importe actual, no el campo guardado (evita dos fuentes
+  de verdad). La plantilla de fondo de emergencia reutiliza
+  `avgEssentialMonthlyExpensesEur` ya calculado por el dashboard.
+- 🐛 De paso se corrigió un bug real de Sprint 1/2: la fecha por defecto de
+  una transacción y el rango del dashboard usaban `toISOString().slice(0,10)`,
+  que en España podía dar el día de ayer (ver `src/lib/date.ts`).
 
 Sprint 4 completo — Deudas con simuladores (`src/features/debts`, `/deudas`):
 - ✅ CRUD de deudas (`Debt`). **`interest_rate`/`apr` se guardan como puntos
@@ -194,6 +177,23 @@ Sprint 5 completo — Inversiones con TWR/XIRR (`src/features/investments`,
 - ✅ Asignación de activos por clase/sector/geografía/divisa y yield-on-cost
   (dividendos de los últimos 12 meses / coste de adquisición).
 
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 5. Siguiente
-en orden estricto: **Sprint 6 — Importación CSV** (papaparse, mapeo de
-columnas, detección de duplicados, reglas de categorización en la importación).
+Sprint 6 completo — Importación CSV (`src/features/import`, `/importar`):
+- ✅ `src/lib/csv/parse-row.ts`: parseo puro y testeado de fecha (ISO o
+  DD/MM/YYYY español, no MM/DD/YYYY) e importe (acepta `1.234,56` y
+  `1,234.56`; con un solo separador se asume que es el decimal). Devuelve
+  `null` ante formatos irreconocibles en vez de adivinar mal — la
+  previsualización es la red de seguridad real, no un parseo perfecto.
+- ✅ Flujo en 3 pasos (subir CSV con `papaparse` en el navegador → mapear
+  columnas a fecha/importe/comercio/descripción → previsualizar): la
+  previsualización llama a `previewImport` (server action) para marcar
+  duplicados y sugerir categoría antes de importar nada.
+- ✅ Duplicado = misma cuenta+fecha+importe+comercio (o descripción si no hay
+  comercio) que una transacción ya existente; empieza sin seleccionar en la
+  tabla pero el usuario puede forzar su importación con el checkbox.
+- ✅ Reutiliza `matchCategorizationRule` (ya usado por la creación manual de
+  transacciones) para sugerir categoría; el usuario puede cambiarla por fila.
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 6. Siguiente
+en orden estricto: **Sprint 7 — Pulido UX/UI + seguridad** (estados de carga/
+vacío/error, responsive, modo oscuro, MFA opcional, revisión de RLS,
+snapshot mensual de patrimonio neto automatizado).
