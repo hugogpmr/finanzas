@@ -38,7 +38,7 @@ Plan técnico completo (roadmap por sprints, fórmulas, esquema de datos detalla
 npm run dev              # servidor de desarrollo
 npm run build            # build de producción
 npm run lint             # eslint
-npm test                 # vitest (cuando esté configurado)
+npm test                 # vitest (una pasada, no watch); usa `npx vitest` para modo watch
 npx prisma migrate dev   # nueva migración (esquema normal, sin RLS/auth.*)
 npx prisma studio        # explorar/editar datos con UI
 ```
@@ -124,6 +124,35 @@ con su sesión — ver sección de arriba):
   (icono de repetición en la lista). Heurística simple, sin UI para gestionar
   grupos todavía.
 
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 1. Siguiente
-en orden estricto: **Sprint 2 — Dashboard con KPIs** (cash flow, tasa de ahorro,
-fondo de emergencia, patrimonio neto, gráficas con Recharts, FIRE number).
+Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`):
+- ✅ `src/lib/finance/kpis.ts`: funciones puras (cash flow, tasa de ahorro, ratio de
+  gastos fijos, 50/30/20, fondo de emergencia, ratio de liquidez, DTI, ratio de
+  vivienda, patrimonio neto, múltiplo sobre ingresos, FIRE number, años hasta FIRE).
+  Primer módulo con tests (`tests/finance/kpis.test.ts`, Vitest configurado con
+  `vitest.config.ts` — `resolve.tsconfigPaths` nativo de Vite, sin plugin extra).
+- ✅ `src/features/dashboard/queries.ts` agrega cuentas + transacciones (últimos 12
+  meses) + `debts` en los KPIs de arriba. Los importes "mensuales" del dashboard son
+  el **promedio de los últimos 3 meses con movimientos**, no el mes en curso a
+  secas (evita que un mes a medias parezca un mes flojo). El patrimonio neto sí usa
+  el saldo actual de cada cuenta convertido a EUR con el tipo de cambio de hoy
+  (`getEurRate`), no promedios.
+- ✅ Las divisiones (`transaction_splits`) no guardan su propio `amount_eur`: para
+  atribuir needs/wants/savings/fijo/vivienda por división se prorratea con el
+  tipo de cambio de la transacción padre (`amount_eur / amount`).
+- ✅ "Ratio de vivienda" detecta la categoría por **nombre** (`vivienda` en el
+  nombre propio o el de su categoría padre) — no hay un flag dedicado en el
+  esquema. Si el usuario renombra/borra esa categoría, el KPI vuelve a 0 sin más.
+- ✅ DTI usa `debts.minimum_payment` (tabla ya migrada con RLS, pero sin CRUD hasta
+  el Sprint 4): hoy da 0%/sin deudas para todo el mundo, y empezará a funcionar
+  solo cuando exista el CRUD de deudas, sin tocar el dashboard.
+- ✅ Categorías: nuevo checkbox "Gasto fijo" (`is_fixed`, ya estaba en el esquema
+  desde Sprint 0 pero no era editable). Vivienda y Suscripciones vienen marcadas
+  como fijas en `DEFAULT_CATEGORIES`.
+- ✅ Gráficas con Recharts: evolución de ingresos/gastos (12 meses) y gasto por
+  categoría raíz (mes actual vs. anterior). `DashboardView` (presentación pura,
+  recibe `DashboardData` ya calculado) está separado de `page.tsx` (fetch) para
+  poder montarlo con datos falsos en `/devtest` sin sesión real.
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 2. Siguiente
+en orden estricto: **Sprint 3 — Presupuestos y objetivos** (50/30/20, zero-based,
+sobres, pay-yourself-first, alertas de límite, objetivos de ahorro).

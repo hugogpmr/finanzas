@@ -168,6 +168,17 @@ export function CategoryDialog({
             </Select>
           </div>
 
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="is_fixed"
+              value="true"
+              defaultChecked={category?.is_fixed ?? false}
+              className="size-4 rounded border-input"
+            />
+            Gasto fijo (alquiler, suscripciones, seguros...)
+          </label>
+
           {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
           <DialogFooter>

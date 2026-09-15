@@ -26,6 +26,7 @@ export async function ensureDefaultCategories(userId: string) {
         name: parent.name,
         type: parent.type,
         needs_wants_savings: parent.needsWantsSavings ?? null,
+        is_fixed: parent.isFixed ?? false,
       })
       .select("id")
       .single();
@@ -39,6 +40,7 @@ export async function ensureDefaultCategories(userId: string) {
         type: parent.type,
         parent_id: parentRow.id,
         needs_wants_savings: parent.needsWantsSavings ?? null,
+        is_fixed: parent.isFixed ?? false,
       })),
     );
   }
@@ -62,6 +64,7 @@ export async function upsertCategory(
   const type = String(formData.get("type") ?? "");
   const parentId = String(formData.get("parent_id") ?? "");
   const needsWantsSavings = String(formData.get("needs_wants_savings") ?? "");
+  const isFixed = String(formData.get("is_fixed") ?? "") === "true";
 
   if (!name) {
     return { error: "El nombre es obligatorio." };
@@ -76,6 +79,7 @@ export async function upsertCategory(
     type,
     parent_id: parentId || null,
     needs_wants_savings: needsWantsSavings || null,
+    is_fixed: isFixed,
   };
 
   const { error } =

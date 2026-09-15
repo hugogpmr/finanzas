@@ -95,6 +95,7 @@ function CategoryGroup({
               <TableHead>Nombre</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>50/30/20</TableHead>
+              <TableHead>Fijo</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -111,6 +112,9 @@ function CategoryGroup({
                 <TableCell>{categoryTypeLabel(category.type)}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {needsWantsSavingsLabel(category.needs_wants_savings)}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {category.is_fixed ? "Sí" : "—"}
                 </TableCell>
                 <TableCell>
                   <CategoryRowActions category={category} allCategories={allCategories} />

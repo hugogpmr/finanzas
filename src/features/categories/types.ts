@@ -41,6 +41,7 @@ export const DEFAULT_CATEGORIES: {
   name: string;
   type: CategoryType;
   needsWantsSavings?: "needs" | "wants" | "savings";
+  isFixed?: boolean;
   children?: string[];
 }[] = [
   { name: "Nómina", type: "income" },
@@ -49,6 +50,7 @@ export const DEFAULT_CATEGORIES: {
     name: "Vivienda",
     type: "expense",
     needsWantsSavings: "needs",
+    isFixed: true,
     children: ["Alquiler o hipoteca", "Suministros"],
   },
   {
@@ -61,7 +63,7 @@ export const DEFAULT_CATEGORIES: {
   { name: "Salud", type: "expense", needsWantsSavings: "needs" },
   { name: "Ocio", type: "expense", needsWantsSavings: "wants" },
   { name: "Compras", type: "expense", needsWantsSavings: "wants" },
-  { name: "Suscripciones", type: "expense", needsWantsSavings: "wants" },
+  { name: "Suscripciones", type: "expense", needsWantsSavings: "wants", isFixed: true },
   { name: "Ahorro e inversión", type: "expense", needsWantsSavings: "savings" },
   { name: "Otros gastos", type: "expense" },
 ];
