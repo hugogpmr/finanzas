@@ -18,6 +18,13 @@ export type Transaction = {
   account?: { name: string; currency: string } | null;
   category?: { name: string; parent_id: string | null } | null;
   transaction_tags?: { tag: { id: string; name: string } }[];
+  splits?: {
+    id: string;
+    category_id: string | null;
+    amount: string;
+    note: string | null;
+    category?: { name: string } | null;
+  }[];
 };
 
 export const TRANSACTION_KINDS = [

@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactElement } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactElement,
+  type SetStateAction,
+} from "react";
 import { useActionState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { upsertTransaction, type TransactionFormState } from "./actions";
 import { TRANSACTION_KINDS, type Transaction, type TransactionKind } from "./types";
 import { sortCategoriesByHierarchy, type Category } from "@/features/categories/types";
@@ -40,6 +47,101 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+type SplitRow = { key: string; categoryId: string; amount: string; note: string };
+
+function newSplitRow(): SplitRow {
+  return { key: crypto.randomUUID(), categoryId: "", amount: "", note: "" };
+}
+
+function SplitEditor({
+  splits,
+  setSplits,
+  categoryOptions,
+  total,
+}: {
+  splits: SplitRow[];
+  setSplits: Dispatch<SetStateAction<SplitRow[]>>;
+  categoryOptions: { value: string; label: string }[];
+  total: number;
+}) {
+  const splitTotal = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const remaining = Number((total - splitTotal).toFixed(2));
+
+  function updateRow(key: string, patch: Partial<SplitRow>) {
+    setSplits((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+  function removeRow(key: string) {
+    setSplits((rows) => rows.filter((r) => r.key !== key));
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-3">
+      <Label>División por categoría</Label>
+      {splits.map((row) => (
+        <div key={row.key} className="flex items-center gap-2">
+          <Select
+            value={row.categoryId}
+            onValueChange={(v) => updateRow(row.key, { categoryId: v as string })}
+            items={categoryOptions}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryOptions.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Importe"
+            className="w-24 shrink-0"
+            value={row.amount}
+            onChange={(e) => updateRow(row.key, { amount: e.target.value })}
+          />
+          <Input
+            placeholder="Nota (opcional)"
+            className="w-28 shrink-0"
+            value={row.note}
+            onChange={(e) => updateRow(row.key, { note: e.target.value })}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => removeRow(row.key)}
+          >
+            <X />
+            <span className="sr-only">Quitar</span>
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
+        onClick={() => setSplits((rows) => [...rows, newSplitRow()])}
+      >
+        <Plus />
+        Añadir división
+      </Button>
+      <p
+        className={`text-xs ${Math.abs(remaining) < 0.01 ? "text-muted-foreground" : "text-destructive"}`}
+      >
+        {Math.abs(remaining) < 0.01
+          ? "Las divisiones suman el importe total."
+          : `Falta repartir ${remaining.toFixed(2)} (negativo = te has pasado).`}
+      </p>
+    </div>
+  );
+}
+
 export function TransactionDialog({
   transaction,
   accounts,
@@ -55,6 +157,21 @@ export function TransactionDialog({
 
   const [kind, setKind] = useState<TransactionKind>(
     transaction ? (Number(transaction.amount) < 0 ? "expense" : "income") : "expense",
+  );
+
+  const [isSplit, setIsSplit] = useState(transaction?.is_split ?? false);
+  const [splits, setSplits] = useState<SplitRow[]>(() => {
+    const existing = transaction?.splits ?? [];
+    if (existing.length === 0) return [newSplitRow(), newSplitRow()];
+    return existing.map((s) => ({
+      key: s.id,
+      categoryId: s.category_id ?? "",
+      amount: Math.abs(Number(s.amount)).toFixed(2),
+      note: s.note ?? "",
+    }));
+  });
+  const [amount, setAmount] = useState(
+    transaction ? Math.abs(Number(transaction.amount)).toFixed(2) : "",
   );
 
   const [state, action, pending] = useActionState<TransactionFormState, FormData>(
@@ -77,6 +194,11 @@ export function TransactionDialog({
   );
 
   const defaultTags = (transaction?.transaction_tags ?? []).map((t) => t.tag.name).join(", ");
+
+  const splitTotal = splits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const splitsMatchTotal =
+    splits.some((s) => s.categoryId && s.amount) &&
+    Math.abs(splitTotal - (Number(amount) || 0)) < 0.01;
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -129,9 +251,8 @@ export function TransactionDialog({
                 type="number"
                 step="0.01"
                 min="0"
-                defaultValue={
-                  transaction ? Math.abs(Number(transaction.amount)).toFixed(2) : undefined
-                }
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 required
               />
             </div>
@@ -170,26 +291,46 @@ export function TransactionDialog({
             </Select>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Categoría (opcional)</Label>
-            <Select
-              name="category_id"
-              defaultValue={transaction?.category_id ?? ""}
-              items={[{ value: "", label: "Sin categorizar" }, ...categoryOptions]}
-            >
-              <SelectTrigger id="category_id" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Sin categorizar</SelectItem>
-                {categoryOptions.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isSplit}
+              onChange={(e) => setIsSplit(e.target.checked)}
+              className="size-4 rounded border-input"
+            />
+            Dividir en varias categorías
+          </label>
+          <input type="hidden" name="is_split" value={isSplit ? "true" : "false"} />
+
+          {isSplit ? (
+            <SplitEditor
+              splits={splits}
+              setSplits={setSplits}
+              categoryOptions={categoryOptions}
+              total={Number(amount) || 0}
+            />
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category_id">Categoría (opcional)</Label>
+              <Select
+                name="category_id"
+                defaultValue={transaction?.category_id ?? ""}
+                items={[{ value: "", label: "Sin categorizar" }, ...categoryOptions]}
+              >
+                <SelectTrigger id="category_id" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin categorizar</SelectItem>
+                  {categoryOptions.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="merchant">Comercio (opcional)</Label>
@@ -220,10 +361,20 @@ export function TransactionDialog({
             />
           </div>
 
+          <input
+            type="hidden"
+            name="splits_json"
+            value={JSON.stringify(
+              splits
+                .filter((s) => s.categoryId && s.amount)
+                .map((s) => ({ category_id: s.categoryId, amount: s.amount, note: s.note })),
+            )}
+          />
+
           {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
           <DialogFooter>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || (isSplit && !splitsMatchTotal)}>
               {pending ? "Guardando..." : "Guardar"}
             </Button>
           </DialogFooter>

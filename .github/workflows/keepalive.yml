@@ -1,0 +1,26 @@
+name: Supabase keep-alive
+
+# Supabase pausa los proyectos del plan gratuito tras 7 días sin actividad.
+# Este job llama a /api/keepalive cada 3 días para que siempre haya una
+# query reciente. Si GitHub desactiva el cron por inactividad del repo
+# (pasa a partir de ~60 días sin commits), basta con volver a hacer un
+# commit o relanzarlo a mano desde la pestaña Actions ("Run workflow").
+on:
+  schedule:
+    - cron: "0 6 */3 * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/keepalive
+        run: |
+          url="https://finanzas-kappa-five.vercel.app/api/keepalive"
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" "$url")
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ne 200 ]; then
+            echo "Keep-alive ping falló con status $status"
+            exit 1
+          fi

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Repeat } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ensureDefaultCategories } from "@/features/categories/actions";
 import type { Category } from "@/features/categories/types";
@@ -33,7 +34,7 @@ export default async function TransaccionesPage() {
       supabase
         .from("transactions")
         .select(
-          "*, account:accounts(name, currency), category:categories(name, parent_id), transaction_tags(tag:tags(id, name))",
+          "*, account:accounts(name, currency), category:categories(name, parent_id), transaction_tags(tag:tags(id, name)), splits:transaction_splits(id, category_id, amount, note, category:categories(name))",
         )
         .order("date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -91,14 +92,25 @@ export default async function TransaccionesPage() {
                   <TableCell className="whitespace-nowrap">{tx.date}</TableCell>
                   <TableCell>{tx.account?.name ?? "—"}</TableCell>
                   <TableCell>
-                    {tx.category
-                      ? tx.category.parent_id
-                        ? `↳ ${tx.category.name}`
-                        : tx.category.name
-                      : "Sin categorizar"}
+                    {tx.is_split
+                      ? (tx.splits ?? [])
+                          .map((s) => s.category?.name)
+                          .filter(Boolean)
+                          .join(", ") || "Dividida"
+                      : tx.category
+                        ? tx.category.parent_id
+                          ? `↳ ${tx.category.name}`
+                          : tx.category.name
+                        : "Sin categorizar"}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {tx.merchant ?? tx.description ?? "—"}
+                    {tx.is_recurring && (
+                      <Repeat
+                        className="ml-1 inline size-3.5 align-text-top"
+                        aria-label="Recurrente"
+                      />
+                    )}
                     {tags.length > 0 && (
                       <span className="ml-2 text-xs">
                         {tags.map((t) => `#${t}`).join(" ")}

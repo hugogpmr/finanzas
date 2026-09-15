@@ -55,9 +55,28 @@ a mano en una migración así (ver `prisma/migrations/20260914194025_enable_row_
 como referencia — policy `user_id = auth.uid()` para tablas con `user_id` propio, o un
 `EXISTS` contra la tabla padre para las que no lo tienen, p.ej. `transaction_splits`).
 
+## Cómo verifica Claude sin poder iniciar sesión
+
+Claude tiene prohibido crear cuentas o iniciar sesión en la app (regla fija, no
+negociable). Patrón usado para probar cada feature de todos modos, antes de
+pedirle al usuario que la pruebe él:
+1. **Script puntual contra la base de datos real** (Prisma Client directo con
+   `DATABASE_URL`, un `user_id` de prueba al azar, todo borrado al final):
+   reproduce exactamente las queries de los server actions para pillar
+   problemas de esquema/constraints.
+2. **Ruta temporal sin autenticación** (añadir el path a `PUBLIC_PATHS` en
+   `src/lib/supabase/middleware.ts` + una página en `src/app/<nombre>/page.tsx`
+   con props falsas — ojo, un nombre con `_` inicial como `_devtest` hace que
+   Next.js la trate como carpeta privada y devuelva 404) para probar de verdad
+   los diálogos en el navegador (Selects controlados, reseteos, precarga en
+   edición, mensajes de error). Se revierte todo (archivo borrado, middleware
+   restaurado) antes de dar la feature por probada.
+Solo el guardado real con la sesión del usuario queda pendiente de que él lo
+confirme.
+
 ## Estado actual
 
-Sprint 0 casi cerrado:
+Sprint 0 cerrado:
 - ✅ Proyecto Next.js + Tailwind + shadcn/ui creado.
 - ✅ Cuentas de GitHub, Supabase y Vercel creadas por el usuario.
 - ✅ Esquema Prisma completo (`prisma/schema.prisma`) migrado a Supabase, con RLS activada
@@ -67,35 +86,44 @@ Sprint 0 casi cerrado:
 - ✅ Layout base del dashboard con sidebar de shadcn/ui y logout.
 - ✅ Site URL/Redirect URLs configuradas en Supabase y `NEXT_PUBLIC_SITE_URL` en Vercel.
   Flujo de registro + confirmación por email verificado de punta a punta en producción.
-- ⬜ Cron keep-alive de GitHub Actions (evita que Supabase pause el proyecto por inactividad).
+- ✅ Cron keep-alive de GitHub Actions (`.github/workflows/keepalive.yml`, cada 3 días)
+  contra `GET /api/keepalive` (ruta pública, hace un `select` real vía anon key —
+  no hace falta la service_role key). Si GitHub desactiva el cron por inactividad
+  del repo (~60 días sin commits), hay que relanzarlo a mano una vez desde la
+  pestaña Actions.
 
-Sprint 1 en progreso:
+Sprint 1 completo (pendiente solo de que el usuario confirme el guardado real
+con su sesión — ver sección de arriba):
 - ✅ CRUD de cuentas (`src/features/accounts`, `/cuentas`): crear, editar, eliminar,
   agrupadas en Activos/Pasivos con subtotal. Verificado en producción por el usuario.
-- 🔶 CRUD de categorías (`src/features/categories`, `/categorias`): crear, editar,
-  eliminar; jerarquía a 2 niveles (categoría principal + subcategorías), tipo
-  ingreso/gasto, etiqueta 50/30/20 opcional. Se siembra un set de categorías por
-  defecto la primera vez que el usuario visita `/categorias` o `/transacciones`
-  (`ensureDefaultCategories`). Verificado con script puntual contra la base de
-  datos (jerarquía, borrado con SetNull) y con una ruta temporal sin login
-  (datos falsos, borrada después) para probar la interactividad real del
-  diálogo: filtro de categoría padre por tipo, reseteo al cambiar de tipo,
-  precarga en edición. Falta solo que el usuario confirme el guardado real con
-  su sesión (Claude no puede iniciar sesión ni crear cuentas).
-- 🔶 CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
+- ✅ CRUD de categorías (`src/features/categories`, `/categorias`): crear, editar,
+  eliminar; jerarquía a 2 niveles, tipo ingreso/gasto, etiqueta 50/30/20 opcional.
+  Se siembra un set de categorías por defecto la primera vez que el usuario visita
+  `/categorias` o `/transacciones` (`ensureDefaultCategories`).
+- ✅ CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
   editar, eliminar; selector de cuenta, categoría (jerárquica, filtrada por
   ingreso/gasto) y etiquetas libres (se crean al vuelo, tabla `tags` +
   `transaction_tags`). El formulario pide tipo (ingreso/gasto) + importe positivo
-  y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida,
-  no es editable en el formulario. Verificado igual que categorías: script
-  contra la base de datos (tags repetidas, borrado en cascada) + ruta temporal
-  sin login para probar el diálogo (filtro de categoría por tipo ingreso/gasto,
-  precarga en edición incluidas etiquetas, mensaje de error sin sesión sin
-  romper la página). Falta que el usuario confirme el guardado real.
-- ⬜ Reglas de auto-categorización por comerciante.
-- ⬜ División de transacciones.
-- ⬜ Conversión de divisa (Frankfurter) y `amount_eur` real — de momento
-  `amount_eur = amount` y `fx_rate = 1` siempre (ver TODO en
-  `src/features/transactions/actions.ts`), independientemente de la divisa de la
-  cuenta. Corregir en cuanto se implemente la integración con Frankfurter.
-- ⬜ Detección básica de recurrentes.
+  y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida.
+- ✅ Reglas de auto-categorización (`src/features/categorization-rules`, `/reglas`):
+  `merchant_contains` o `description_regex`, con prioridad (mayor primero). Se
+  aplican en `upsertTransaction` solo cuando el usuario no elige categoría a mano.
+- ✅ División de transacciones (`transaction_splits`): checkbox "Dividir en varias
+  categorías" en el diálogo de transacción, filas dinámicas categoría+importe+nota,
+  validación en cliente (el botón Guardar se desactiva si no cuadra la suma) y en
+  servidor. Una transacción dividida guarda `category_id = null` e `is_split = true`;
+  la lista de transacciones muestra las categorías de la división en vez de una sola.
+- ✅ Conversión de divisa real (`src/lib/fx.ts`, Frankfurter, `api.frankfurter.dev`):
+  cachea el tipo de cambio en `fx_rates` por fecha+base+quote y calcula `amount_eur`
+  real. Si Frankfurter falla, hace fallback a `fx_rate = 1` en vez de bloquear el
+  guardado (ver comentario en el propio archivo). No es lógica financiera pura
+  (hace red + caché en BD), por eso vive en `src/lib/fx.ts` y no en `src/lib/finance/`.
+- ✅ Detección básica de recurrentes: al crear una transacción con comercio, si ya
+  hay 3+ transacciones del mismo usuario con mismo comercio+importe+divisa, se
+  marcan todas `is_recurring = true` con un `recurring_group_id` compartido
+  (icono de repetición en la lista). Heurística simple, sin UI para gestionar
+  grupos todavía.
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 1. Siguiente
+en orden estricto: **Sprint 2 — Dashboard con KPIs** (cash flow, tasa de ahorro,
+fondo de emergencia, patrimonio neto, gráficas con Recharts, FIRE number).
