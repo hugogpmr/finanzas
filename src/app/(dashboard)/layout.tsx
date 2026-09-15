@@ -7,6 +7,7 @@ import {
   PiggyBank,
   Tags,
   Target,
+  TrendingUp,
   Wallet,
   Wand2,
 } from "lucide-react";
@@ -99,6 +100,12 @@ export default async function DashboardLayout({
                   <SidebarMenuButton render={<Link href="/deudas" />}>
                     <CreditCard />
                     <span>Deudas</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/inversiones" />}>
+                    <TrendingUp />
+                    <span>Inversiones</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

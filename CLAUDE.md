@@ -85,50 +85,31 @@ producción, layout con sidebar. Cron keep-alive de GitHub Actions
 ruta pública vía anon key); si GitHub lo desactiva por inactividad del repo
 (~60 días sin commits) hay que relanzarlo a mano desde la pestaña Actions.
 
-Sprint 1 completo — CRUD base, verificado en producción por el usuario:
-- ✅ Cuentas (`/cuentas`) multi-divisa, agrupadas en Activos/Pasivos.
-- ✅ Categorías (`/categorias`) a 2 niveles, tipo ingreso/gasto, etiqueta
-  50/30/20 opcional; se siembra un set por defecto la primera vez
-  (`ensureDefaultCategories`).
-- ✅ Transacciones (`/transacciones`): categoría jerárquica, etiquetas libres,
-  y división en varias categorías (`transaction_splits`: la transacción padre
-  guarda `category_id=null`+`is_split=true`).
-- ✅ Reglas de auto-categorización (`/reglas`, `merchant_contains`/
-  `description_regex` por prioridad), aplicadas solo si el usuario no elige
-  categoría a mano.
-- ✅ Conversión de divisa real (`src/lib/fx.ts`, Frankfurter, cacheada en
-  `fx_rates`, fallback a `fx_rate=1` si la API falla).
-- ✅ Detección básica de recurrentes (3+ transacciones iguales de
-  comercio+importe+divisa ⇒ `is_recurring`+`recurring_group_id` compartido).
+Sprint 1 completo — CRUD base, verificado en producción: cuentas multi-divisa
+(`/cuentas`), categorías a 2 niveles con etiqueta 50/30/20 opcional
+(`/categorias`, `ensureDefaultCategories` siembra un set por defecto),
+transacciones con categoría jerárquica/etiquetas/división en varias
+categorías (`/transacciones`, `transaction_splits`), reglas de
+auto-categorización (`/reglas`), conversión de divisa real cacheada
+(`src/lib/fx.ts`, Frankfurter) y detección básica de recurrentes (3+
+transacciones iguales de comercio+importe+divisa).
 
 Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`):
-- ✅ `src/lib/finance/kpis.ts`: funciones puras (cash flow, tasa de ahorro, ratio de
-  gastos fijos, 50/30/20, fondo de emergencia, ratio de liquidez, DTI, ratio de
-  vivienda, patrimonio neto, múltiplo sobre ingresos, FIRE number, años hasta FIRE).
-  Primer módulo con tests (`tests/finance/kpis.test.ts`, Vitest configurado con
-  `vitest.config.ts` — `resolve.tsconfigPaths` nativo de Vite, sin plugin extra).
-- ✅ `src/features/dashboard/queries.ts` agrega cuentas + transacciones (últimos 12
-  meses) + `debts` en los KPIs de arriba. Los importes "mensuales" del dashboard son
-  el **promedio de los últimos 3 meses con movimientos**, no el mes en curso a
-  secas (evita que un mes a medias parezca un mes flojo). El patrimonio neto sí usa
-  el saldo actual de cada cuenta convertido a EUR con el tipo de cambio de hoy
-  (`getEurRate`), no promedios.
-- ✅ Las divisiones (`transaction_splits`) no guardan su propio `amount_eur`: para
-  atribuir needs/wants/savings/fijo/vivienda por división se prorratea con el
-  tipo de cambio de la transacción padre (`amount_eur / amount`).
-- ✅ "Ratio de vivienda" detecta la categoría por **nombre** (`vivienda` en el
-  nombre propio o el de su categoría padre) — no hay un flag dedicado en el
-  esquema. Si el usuario renombra/borra esa categoría, el KPI vuelve a 0 sin más.
-- ✅ DTI usa `debts.minimum_payment` (tabla ya migrada con RLS, pero sin CRUD hasta
-  el Sprint 4): hoy da 0%/sin deudas para todo el mundo, y empezará a funcionar
-  solo cuando exista el CRUD de deudas, sin tocar el dashboard.
-- ✅ Categorías: nuevo checkbox "Gasto fijo" (`is_fixed`, ya estaba en el esquema
-  desde Sprint 0 pero no era editable). Vivienda y Suscripciones vienen marcadas
-  como fijas en `DEFAULT_CATEGORIES`.
-- ✅ Gráficas con Recharts: evolución de ingresos/gastos (12 meses) y gasto por
-  categoría raíz (mes actual vs. anterior). `DashboardView` (presentación pura,
-  recibe `DashboardData` ya calculado) está separado de `page.tsx` (fetch) para
-  poder montarlo con datos falsos en `/devtest` sin sesión real.
+- ✅ `src/lib/finance/kpis.ts`: funciones puras (cash flow, tasa de ahorro,
+  gastos fijos, 50/30/20, fondo de emergencia, liquidez, DTI, vivienda,
+  patrimonio neto, múltiplo, FIRE number, años hasta FIRE) — primer módulo
+  con tests (Vitest, `vitest.config.ts` con `resolve.tsconfigPaths` nativo).
+- ✅ `src/features/dashboard/queries.ts` agrega cuentas+transacciones (12
+  meses)+`debts`; los importes "mensuales" son el **promedio de los últimos 3
+  meses con movimientos**, no el mes en curso a secas. El patrimonio neto usa
+  el saldo actual de cada cuenta a EUR con el tipo de cambio de hoy.
+- ✅ "Ratio de vivienda" detecta la categoría por **nombre** (`vivienda`), no
+  hay un flag dedicado en el esquema. Categorías: checkbox "Gasto fijo"
+  (`is_fixed`). Gráficas con Recharts.
+- ✅ `DashboardView` (presentación pura) separado de `page.tsx` (fetch) para
+  poder montarlo con datos falsos en `/devtest` sin sesión real (los sprints
+  siguientes prueban igual por `/devtest` pero sin extraer un componente de
+  vista propio: alcanza con montar la página real con datos falsos).
 
 Sprint 3 completo — Presupuestos y objetivos (`src/features/budgets`,
 `src/features/goals`, `/presupuestos`, `/objetivos`):
@@ -190,6 +171,29 @@ Sprint 4 completo — Deudas con simuladores (`src/features/debts`, `/deudas`):
 - ✅ El DTI del dashboard (Sprint 2, `dtiPct` con `debts.minimum_payment`)
   ya da datos reales en cuanto hay deudas, sin haber tocado ese código.
 
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 4. Siguiente
-en orden estricto: **Sprint 5 — Inversiones con TWR/XIRR** (holdings,
-precios cacheados, XIRR con librería, TWR a mano, asignación de activos).
+Sprint 5 completo — Inversiones con TWR/XIRR (`src/features/investments`,
+`/inversiones`):
+- ✅ CRUD de posiciones (`Holding`) y movimientos (`InvestmentTransaction`):
+  igual que `accounts.current_balance`, `quantity`/`current_price` se
+  mantienen a mano, no se recalculan solos desde el historial.
+- ✅ `src/lib/finance/xirr.ts` envuelve `@webcarrot/xirr` (Newton-Raphson);
+  test con el ejemplo del README de `xirr` (-1000/-2500/-1000, valor final
+  5050 ⇒ 0.2504234710540838, precisión 4: `@webcarrot/xirr` usa un day-count
+  ligeramente distinto, no es un bug). `src/lib/finance/twr.ts` codifica TWR
+  a mano (enlace geométrico de subperiodos): ninguna librería JS lo trae.
+  Convención de signo de `amount` = flujo de caja real (compra/aportación/
+  comisión negativo, venta/retirada/dividendo positivo), ver
+  `src/lib/finance/CLAUDE.md`.
+- ✅ TWR por posición enlaza los periodos entre `price_snapshots`
+  consecutivos, con flujo externo = compras/ventas en ese rango de fechas —
+  simplificación honesta sin valoración diaria continua (ver
+  `src/features/investments/queries.ts`).
+- ✅ Botón "Actualizar precios" contra Twelve Data (`TWELVE_DATA_API_KEY`
+  opcional, plan gratis 800 llamadas/día): sin la clave no falla, solo
+  informa — el precio se puede seguir editando a mano.
+- ✅ Asignación de activos por clase/sector/geografía/divisa y yield-on-cost
+  (dividendos de los últimos 12 meses / coste de adquisición).
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 5. Siguiente
+en orden estricto: **Sprint 6 — Importación CSV** (papaparse, mapeo de
+columnas, detección de duplicados, reglas de categorización en la importación).
