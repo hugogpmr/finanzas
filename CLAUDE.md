@@ -76,13 +76,18 @@ Sprint 1 en progreso:
   eliminar; jerarquía a 2 niveles (categoría principal + subcategorías), tipo
   ingreso/gasto, etiqueta 50/30/20 opcional. Se siembra un set de categorías por
   defecto la primera vez que el usuario visita `/categorias` o `/transacciones`
-  (`ensureDefaultCategories`). Pendiente de verificar en producción.
+  (`ensureDefaultCategories`). Esquema/constraints verificados con un script
+  puntual contra la base de datos (jerarquía, borrado con SetNull, ver commits);
+  falta el paso a paso por la interfaz, que solo puede hacer el usuario (Claude
+  no puede iniciar sesión ni crear cuentas).
 - 🔶 CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
   editar, eliminar; selector de cuenta, categoría (jerárquica, filtrada por
   ingreso/gasto) y etiquetas libres (se crean al vuelo, tabla `tags` +
   `transaction_tags`). El formulario pide tipo (ingreso/gasto) + importe positivo
   y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida,
-  no es editable en el formulario. Pendiente de verificar en producción.
+  no es editable en el formulario. Esquema/constraints verificados igual que
+  categorías (incluye el upsert de tags repetidas y el borrado en cascada);
+  falta el paso a paso por la interfaz por parte del usuario.
 - ⬜ Reglas de auto-categorización por comerciante.
 - ⬜ División de transacciones.
 - ⬜ Conversión de divisa (Frankfurter) y `amount_eur` real — de momento
