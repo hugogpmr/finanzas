@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertBudgetLine, type BudgetLineFormState } from "./actions";
@@ -42,6 +42,7 @@ export function BudgetLineDialog({
   open,
   onOpenChange,
 }: BudgetLineDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -90,9 +91,9 @@ export function BudgetLineDialog({
           <input type="hidden" name="budget_id" value={budgetId} />
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Categoría</Label>
+            <Label htmlFor={`${id}-category_id`}>Categoría</Label>
             <Select name="category_id" defaultValue={line?.category_id} items={categoryOptions}>
-              <SelectTrigger id="category_id" className="w-full">
+              <SelectTrigger id={`${id}-category_id`} className="w-full">
                 <SelectValue placeholder="Elige una categoría" />
               </SelectTrigger>
               <SelectContent>
@@ -107,9 +108,9 @@ export function BudgetLineDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="allocated">Asignado (€)</Label>
+              <Label htmlFor={`${id}-allocated`}>Asignado (€)</Label>
               <Input
-                id="allocated"
+                id={`${id}-allocated`}
                 name="allocated"
                 type="number"
                 step="0.01"
@@ -120,9 +121,9 @@ export function BudgetLineDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="alert_threshold_pct">Avisar al superar % (opcional)</Label>
+              <Label htmlFor={`${id}-alert_threshold_pct`}>Avisar al superar % (opcional)</Label>
               <Input
-                id="alert_threshold_pct"
+                id={`${id}-alert_threshold_pct`}
                 name="alert_threshold_pct"
                 type="number"
                 step="1"

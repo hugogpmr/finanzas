@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertInvestmentTransaction, type InvestmentTxFormState } from "./actions";
@@ -44,6 +44,7 @@ export function InvestmentTransactionDialog({
   open,
   onOpenChange,
 }: InvestmentTransactionDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -102,13 +103,13 @@ export function InvestmentTransactionDialog({
           {transaction && <input type="hidden" name="id" value={transaction.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="holding_id">Posición</Label>
+            <Label htmlFor={`${id}-holding_id`}>Posición</Label>
             <Select
               name="holding_id"
               defaultValue={transaction?.holding_id ?? defaultHoldingId ?? holdings[0]?.id ?? ""}
               items={holdings.map((h) => ({ value: h.id, label: h.ticker ?? h.isin ?? h.id }))}
             >
-              <SelectTrigger id="holding_id" className="w-full">
+              <SelectTrigger id={`${id}-holding_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -123,14 +124,14 @@ export function InvestmentTransactionDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="type">Tipo</Label>
+              <Label htmlFor={`${id}-type`}>Tipo</Label>
               <Select
                 name="type"
                 value={type}
                 onValueChange={(v) => setType(v as InvestmentTxType)}
                 items={INVESTMENT_TX_TYPES.map(({ value, label }) => ({ value, label }))}
               >
-                <SelectTrigger id="type" className="w-full">
+                <SelectTrigger id={`${id}-type`} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,9 +144,9 @@ export function InvestmentTransactionDialog({
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="date">Fecha</Label>
+              <Label htmlFor={`${id}-date`}>Fecha</Label>
               <Input
-                id="date"
+                id={`${id}-date`}
                 name="date"
                 type="date"
                 defaultValue={transaction?.date ?? todayDateStr()}
@@ -157,9 +158,9 @@ export function InvestmentTransactionDialog({
           {showQuantityFields && (
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="quantity">Cantidad</Label>
+                <Label htmlFor={`${id}-quantity`}>Cantidad</Label>
                 <Input
-                  id="quantity"
+                  id={`${id}-quantity`}
                   name="quantity"
                   type="number"
                   step="0.00000001"
@@ -169,9 +170,9 @@ export function InvestmentTransactionDialog({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="price_per_unit">Precio por unidad</Label>
+                <Label htmlFor={`${id}-price_per_unit`}>Precio por unidad</Label>
                 <Input
-                  id="price_per_unit"
+                  id={`${id}-price_per_unit`}
                   name="price_per_unit"
                   type="number"
                   step="0.000001"
@@ -185,9 +186,9 @@ export function InvestmentTransactionDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="amount">Importe (sin signo)</Label>
+              <Label htmlFor={`${id}-amount`}>Importe (sin signo)</Label>
               <Input
-                id="amount"
+                id={`${id}-amount`}
                 name="amount"
                 type="number"
                 step="0.01"
@@ -198,9 +199,9 @@ export function InvestmentTransactionDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="fee">Comisión (opcional)</Label>
+              <Label htmlFor={`${id}-fee`}>Comisión (opcional)</Label>
               <Input
-                id="fee"
+                id={`${id}-fee`}
                 name="fee"
                 type="number"
                 step="0.01"

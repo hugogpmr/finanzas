@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useState,
   type Dispatch,
@@ -147,6 +148,7 @@ export function TransactionDialog({
   open,
   onOpenChange,
 }: TransactionDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -219,14 +221,14 @@ export function TransactionDialog({
           {transaction && <input type="hidden" name="id" value={transaction.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="kind">Tipo</Label>
+            <Label htmlFor={`${id}-kind`}>Tipo</Label>
             <Select
               name="kind"
               value={kind}
               onValueChange={(v) => setKind(v as TransactionKind)}
               items={TRANSACTION_KINDS.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="kind" className="w-full">
+              <SelectTrigger id={`${id}-kind`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -241,9 +243,9 @@ export function TransactionDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="amount">Importe</Label>
+              <Label htmlFor={`${id}-amount`}>Importe</Label>
               <Input
-                id="amount"
+                id={`${id}-amount`}
                 name="amount"
                 type="number"
                 step="0.01"
@@ -254,9 +256,9 @@ export function TransactionDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="date">Fecha</Label>
+              <Label htmlFor={`${id}-date`}>Fecha</Label>
               <Input
-                id="date"
+                id={`${id}-date`}
                 name="date"
                 type="date"
                 defaultValue={transaction?.date ?? todayDateStr()}
@@ -266,7 +268,7 @@ export function TransactionDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="account_id">Cuenta</Label>
+            <Label htmlFor={`${id}-account_id`}>Cuenta</Label>
             <Select
               name="account_id"
               defaultValue={transaction?.account_id ?? accounts[0]?.id}
@@ -275,7 +277,7 @@ export function TransactionDialog({
                 label: `${a.name} (${a.currency})`,
               }))}
             >
-              <SelectTrigger id="account_id" className="w-full">
+              <SelectTrigger id={`${id}-account_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -308,13 +310,13 @@ export function TransactionDialog({
             />
           ) : (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="category_id">Categoría (opcional)</Label>
+              <Label htmlFor={`${id}-category_id`}>Categoría (opcional)</Label>
               <Select
                 name="category_id"
                 defaultValue={transaction?.category_id ?? ""}
                 items={[{ value: "", label: "Sin categorizar" }, ...categoryOptions]}
               >
-                <SelectTrigger id="category_id" className="w-full">
+                <SelectTrigger id={`${id}-category_id`} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,9 +332,9 @@ export function TransactionDialog({
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="merchant">Comercio (opcional)</Label>
+            <Label htmlFor={`${id}-merchant`}>Comercio (opcional)</Label>
             <Input
-              id="merchant"
+              id={`${id}-merchant`}
               name="merchant"
               defaultValue={transaction?.merchant ?? ""}
               placeholder="Mercadona, Netflix..."
@@ -340,18 +342,18 @@ export function TransactionDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Descripción (opcional)</Label>
+            <Label htmlFor={`${id}-description`}>Descripción (opcional)</Label>
             <Input
-              id="description"
+              id={`${id}-description`}
               name="description"
               defaultValue={transaction?.description ?? ""}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="tags">Etiquetas (opcional)</Label>
+            <Label htmlFor={`${id}-tags`}>Etiquetas (opcional)</Label>
             <Input
-              id="tags"
+              id={`${id}-tags`}
               name="tags"
               defaultValue={defaultTags}
               placeholder="viaje, trabajo... (separadas por comas)"

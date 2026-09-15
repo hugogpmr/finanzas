@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertDebt, type DebtFormState } from "./actions";
@@ -36,6 +36,7 @@ type DebtDialogProps = {
 };
 
 export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: DebtDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -77,9 +78,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
           {debt && <input type="hidden" name="id" value={debt.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor={`${id}-name`}>Nombre</Label>
             <Input
-              id="name"
+              id={`${id}-name`}
               name="name"
               defaultValue={debt?.name}
               placeholder="Tarjeta Visa, préstamo del coche..."
@@ -88,14 +89,14 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="debt_type">Tipo</Label>
+            <Label htmlFor={`${id}-debt_type`}>Tipo</Label>
             <Select
               name="debt_type"
               value={debtType}
               onValueChange={(v) => setDebtType(v as DebtType)}
               items={DEBT_TYPES.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="debt_type" className="w-full">
+              <SelectTrigger id={`${id}-debt_type`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -110,9 +111,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="principal">Saldo pendiente (€)</Label>
+              <Label htmlFor={`${id}-principal`}>Saldo pendiente (€)</Label>
               <Input
-                id="principal"
+                id={`${id}-principal`}
                 name="principal"
                 type="number"
                 step="0.01"
@@ -123,9 +124,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="original_principal">Principal original (€, opcional)</Label>
+              <Label htmlFor={`${id}-original_principal`}>Principal original (€, opcional)</Label>
               <Input
-                id="original_principal"
+                id={`${id}-original_principal`}
                 name="original_principal"
                 type="number"
                 step="0.01"
@@ -138,9 +139,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="interest_rate">TIN anual (%)</Label>
+              <Label htmlFor={`${id}-interest_rate`}>TIN anual (%)</Label>
               <Input
-                id="interest_rate"
+                id={`${id}-interest_rate`}
                 name="interest_rate"
                 type="number"
                 step="0.01"
@@ -152,9 +153,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="apr">TAE (%, opcional)</Label>
+              <Label htmlFor={`${id}-apr`}>TAE (%, opcional)</Label>
               <Input
-                id="apr"
+                id={`${id}-apr`}
                 name="apr"
                 type="number"
                 step="0.01"
@@ -168,9 +169,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="minimum_payment">Cuota mínima (€/mes)</Label>
+              <Label htmlFor={`${id}-minimum_payment`}>Cuota mínima (€/mes)</Label>
               <Input
-                id="minimum_payment"
+                id={`${id}-minimum_payment`}
                 name="minimum_payment"
                 type="number"
                 step="0.01"
@@ -181,9 +182,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="term_months">Plazo restante (meses, opcional)</Label>
+              <Label htmlFor={`${id}-term_months`}>Plazo restante (meses, opcional)</Label>
               <Input
-                id="term_months"
+                id={`${id}-term_months`}
                 name="term_months"
                 type="number"
                 step="1"
@@ -196,9 +197,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="start_date">Fecha de inicio</Label>
+              <Label htmlFor={`${id}-start_date`}>Fecha de inicio</Label>
               <Input
-                id="start_date"
+                id={`${id}-start_date`}
                 name="start_date"
                 type="date"
                 defaultValue={debt?.start_date ?? todayDateStr()}
@@ -206,9 +207,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="payment_day">Día de pago (1-31)</Label>
+              <Label htmlFor={`${id}-payment_day`}>Día de pago (1-31)</Label>
               <Input
-                id="payment_day"
+                id={`${id}-payment_day`}
                 name="payment_day"
                 type="number"
                 step="1"
@@ -221,9 +222,9 @@ export function DebtDialog({ debt, accounts, trigger, open, onOpenChange }: Debt
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="account_id">Cuenta relacionada (opcional)</Label>
+            <Label htmlFor={`${id}-account_id`}>Cuenta relacionada (opcional)</Label>
             <Select name="account_id" defaultValue={debt?.account_id ?? ""} items={accountOptions}>
-              <SelectTrigger id="account_id" className="w-full">
+              <SelectTrigger id={`${id}-account_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

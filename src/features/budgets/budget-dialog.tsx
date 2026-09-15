@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertBudget, type BudgetFormState } from "./actions";
@@ -33,6 +33,7 @@ type BudgetDialogProps = {
 };
 
 export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -73,9 +74,9 @@ export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDial
           {budget && <input type="hidden" name="id" value={budget.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor={`${id}-name`}>Nombre</Label>
             <Input
-              id="name"
+              id={`${id}-name`}
               name="name"
               defaultValue={budget?.name}
               placeholder="Presupuesto de octubre"
@@ -85,14 +86,14 @@ export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDial
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="method">Método</Label>
+              <Label htmlFor={`${id}-method`}>Método</Label>
               <Select
                 name="method"
                 value={method}
                 onValueChange={(v) => setMethod(v as BudgetMethod)}
                 items={BUDGET_METHODS.map(({ value, label }) => ({ value, label }))}
               >
-                <SelectTrigger id="method" className="w-full">
+                <SelectTrigger id={`${id}-method`} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,14 +106,14 @@ export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDial
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="period">Periodo</Label>
+              <Label htmlFor={`${id}-period`}>Periodo</Label>
               <Select
                 name="period"
                 value={period}
                 onValueChange={(v) => setPeriod(v as BudgetPeriod)}
                 items={BUDGET_PERIODS.map(({ value, label }) => ({ value, label }))}
               >
-                <SelectTrigger id="period" className="w-full">
+                <SelectTrigger id={`${id}-period`} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -128,9 +129,9 @@ export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDial
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="start_date">Fecha de inicio</Label>
+              <Label htmlFor={`${id}-start_date`}>Fecha de inicio</Label>
               <Input
-                id="start_date"
+                id={`${id}-start_date`}
                 name="start_date"
                 type="date"
                 defaultValue={budget?.start_date ?? todayDateStr()}
@@ -138,9 +139,9 @@ export function BudgetDialog({ budget, trigger, open, onOpenChange }: BudgetDial
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="total_income">Ingreso total (€)</Label>
+              <Label htmlFor={`${id}-total_income`}>Ingreso total (€)</Label>
               <Input
-                id="total_income"
+                id={`${id}-total_income`}
                 name="total_income"
                 type="number"
                 step="0.01"

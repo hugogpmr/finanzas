@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertRule, type RuleFormState } from "./actions";
@@ -34,6 +34,7 @@ type RuleDialogProps = {
 };
 
 export function RuleDialog({ rule, categories, trigger, open, onOpenChange }: RuleDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -75,14 +76,14 @@ export function RuleDialog({ rule, categories, trigger, open, onOpenChange }: Ru
           {rule && <input type="hidden" name="id" value={rule.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="match_type">Condición</Label>
+            <Label htmlFor={`${id}-match_type`}>Condición</Label>
             <Select
               name="match_type"
               value={matchType}
               onValueChange={(v) => setMatchType(v as MatchType)}
               items={MATCH_TYPES.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="match_type" className="w-full">
+              <SelectTrigger id={`${id}-match_type`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -96,11 +97,11 @@ export function RuleDialog({ rule, categories, trigger, open, onOpenChange }: Ru
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="pattern">
+            <Label htmlFor={`${id}-pattern`}>
               {matchType === "merchant_contains" ? "Texto a buscar" : "Expresión regular"}
             </Label>
             <Input
-              id="pattern"
+              id={`${id}-pattern`}
               name="pattern"
               defaultValue={rule?.pattern}
               placeholder={matchType === "merchant_contains" ? "mercadona" : "^uber.*eats$"}
@@ -109,13 +110,13 @@ export function RuleDialog({ rule, categories, trigger, open, onOpenChange }: Ru
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="category_id">Categoría a asignar</Label>
+            <Label htmlFor={`${id}-category_id`}>Categoría a asignar</Label>
             <Select
               name="category_id"
               defaultValue={rule?.category_id}
               items={categoryOptions}
             >
-              <SelectTrigger id="category_id" className="w-full">
+              <SelectTrigger id={`${id}-category_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -129,9 +130,9 @@ export function RuleDialog({ rule, categories, trigger, open, onOpenChange }: Ru
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="priority">Prioridad (mayor número = se aplica antes)</Label>
+            <Label htmlFor={`${id}-priority`}>Prioridad (mayor número = se aplica antes)</Label>
             <Input
-              id="priority"
+              id={`${id}-priority`}
               name="priority"
               type="number"
               step="1"

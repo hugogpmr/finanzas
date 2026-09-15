@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertGoal, type GoalFormState } from "./actions";
@@ -51,6 +51,7 @@ export function GoalDialog({
   onOpenChange,
   initialValues,
 }: GoalDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -93,9 +94,9 @@ export function GoalDialog({
           {goal && <input type="hidden" name="id" value={goal.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor={`${id}-name`}>Nombre</Label>
             <Input
-              id="name"
+              id={`${id}-name`}
               name="name"
               defaultValue={goal?.name ?? initialValues?.name}
               placeholder="Fondo de emergencia, vacaciones, coche..."
@@ -104,14 +105,14 @@ export function GoalDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="type">Tipo</Label>
+            <Label htmlFor={`${id}-type`}>Tipo</Label>
             <Select
               name="type"
               value={type}
               onValueChange={(v) => setType(v as GoalType)}
               items={GOAL_TYPES.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="type" className="w-full">
+              <SelectTrigger id={`${id}-type`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -126,9 +127,9 @@ export function GoalDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="target_amount">Importe objetivo (€)</Label>
+              <Label htmlFor={`${id}-target_amount`}>Importe objetivo (€)</Label>
               <Input
-                id="target_amount"
+                id={`${id}-target_amount`}
                 name="target_amount"
                 type="number"
                 step="0.01"
@@ -139,9 +140,9 @@ export function GoalDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="target_date">Fecha objetivo (opcional)</Label>
+              <Label htmlFor={`${id}-target_date`}>Fecha objetivo (opcional)</Label>
               <Input
-                id="target_date"
+                id={`${id}-target_date`}
                 name="target_date"
                 type="date"
                 defaultValue={goal?.target_date ?? ""}
@@ -152,9 +153,9 @@ export function GoalDialog({
 
           {type === "emergency_fund" && (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="months_of_expenses">Meses de gasto que quieres cubrir</Label>
+              <Label htmlFor={`${id}-months_of_expenses`}>Meses de gasto que quieres cubrir</Label>
               <Input
-                id="months_of_expenses"
+                id={`${id}-months_of_expenses`}
                 name="months_of_expenses"
                 type="number"
                 step="1"
@@ -166,14 +167,14 @@ export function GoalDialog({
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="linked_account_id">Cuenta enlazada (opcional)</Label>
+            <Label htmlFor={`${id}-linked_account_id`}>Cuenta enlazada (opcional)</Label>
             <Select
               name="linked_account_id"
               value={linkedAccountId}
               onValueChange={(v) => setLinkedAccountId(v ?? "")}
               items={accountOptions}
             >
-              <SelectTrigger id="linked_account_id" className="w-full">
+              <SelectTrigger id={`${id}-linked_account_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -193,9 +194,9 @@ export function GoalDialog({
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="current_amount">Importe actual (€)</Label>
+              <Label htmlFor={`${id}-current_amount`}>Importe actual (€)</Label>
               <Input
-                id="current_amount"
+                id={`${id}-current_amount`}
                 name="current_amount"
                 type="number"
                 step="0.01"
@@ -206,9 +207,9 @@ export function GoalDialog({
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="monthly_contribution">Aportación mensual prevista (€, opcional)</Label>
+            <Label htmlFor={`${id}-monthly_contribution`}>Aportación mensual prevista (€, opcional)</Label>
             <Input
-              id="monthly_contribution"
+              id={`${id}-monthly_contribution`}
               name="monthly_contribution"
               type="number"
               step="0.01"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertAccount, type AccountFormState } from "./actions";
@@ -34,6 +34,7 @@ type AccountDialogProps = {
 };
 
 export function AccountDialog({ account, trigger, open, onOpenChange }: AccountDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -71,9 +72,9 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
           {account && <input type="hidden" name="id" value={account.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor={`${id}-name`}>Nombre</Label>
             <Input
-              id="name"
+              id={`${id}-name`}
               name="name"
               defaultValue={account?.name}
               placeholder="Cuenta corriente Santander"
@@ -82,13 +83,13 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="type">Tipo</Label>
+            <Label htmlFor={`${id}-type`}>Tipo</Label>
             <Select
               name="type"
               defaultValue={account?.type ?? "checking"}
               items={ACCOUNT_TYPES.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="type" className="w-full">
+              <SelectTrigger id={`${id}-type`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -103,9 +104,9 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="current_balance">Saldo actual</Label>
+              <Label htmlFor={`${id}-current_balance`}>Saldo actual</Label>
               <Input
-                id="current_balance"
+                id={`${id}-current_balance`}
                 name="current_balance"
                 type="number"
                 step="0.01"
@@ -114,9 +115,9 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="currency">Divisa</Label>
+              <Label htmlFor={`${id}-currency`}>Divisa</Label>
               <Select name="currency" defaultValue={account?.currency ?? "EUR"}>
-                <SelectTrigger id="currency" className="w-full">
+                <SelectTrigger id={`${id}-currency`} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,9 +132,9 @@ export function AccountDialog({ account, trigger, open, onOpenChange }: AccountD
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="institution">Entidad (opcional)</Label>
+            <Label htmlFor={`${id}-institution`}>Entidad (opcional)</Label>
             <Input
-              id="institution"
+              id={`${id}-institution`}
               name="institution"
               defaultValue={account?.institution ?? ""}
               placeholder="Santander, Trade Republic..."

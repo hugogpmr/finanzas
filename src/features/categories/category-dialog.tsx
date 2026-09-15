@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useId, useState, type ReactElement } from "react";
 import { useActionState } from "react";
 import { Plus } from "lucide-react";
 import { upsertCategory, type CategoryFormState } from "./actions";
@@ -44,6 +44,7 @@ export function CategoryDialog({
   open,
   onOpenChange,
 }: CategoryDialogProps) {
+  const id = useId();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
@@ -89,9 +90,9 @@ export function CategoryDialog({
           {category && <input type="hidden" name="id" value={category.id} />}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor={`${id}-name`}>Nombre</Label>
             <Input
-              id="name"
+              id={`${id}-name`}
               name="name"
               defaultValue={category?.name}
               placeholder="Ocio, Transporte..."
@@ -100,14 +101,14 @@ export function CategoryDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="type">Tipo</Label>
+            <Label htmlFor={`${id}-type`}>Tipo</Label>
             <Select
               name="type"
               value={type}
               onValueChange={(v) => setType(v as CategoryType)}
               items={CATEGORY_TYPES.map(({ value, label }) => ({ value, label }))}
             >
-              <SelectTrigger id="type" className="w-full">
+              <SelectTrigger id={`${id}-type`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -121,7 +122,7 @@ export function CategoryDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="parent_id">Categoría padre (opcional)</Label>
+            <Label htmlFor={`${id}-parent_id`}>Categoría padre (opcional)</Label>
             <Select
               name="parent_id"
               defaultValue={category?.parent_id ?? ""}
@@ -130,7 +131,7 @@ export function CategoryDialog({
                 ...parentOptions.map((p) => ({ value: p.id, label: p.name })),
               ]}
             >
-              <SelectTrigger id="parent_id" className="w-full">
+              <SelectTrigger id={`${id}-parent_id`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -145,7 +146,7 @@ export function CategoryDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="needs_wants_savings">Regla 50/30/20 (opcional)</Label>
+            <Label htmlFor={`${id}-needs_wants_savings`}>Regla 50/30/20 (opcional)</Label>
             <Select
               name="needs_wants_savings"
               defaultValue={category?.needs_wants_savings ?? ""}
@@ -154,7 +155,7 @@ export function CategoryDialog({
                 ...NEEDS_WANTS_SAVINGS.map(({ value, label }) => ({ value, label })),
               ]}
             >
-              <SelectTrigger id="needs_wants_savings" className="w-full">
+              <SelectTrigger id={`${id}-needs_wants_savings`} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
