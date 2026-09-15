@@ -76,18 +76,22 @@ Sprint 1 en progreso:
   eliminar; jerarquía a 2 niveles (categoría principal + subcategorías), tipo
   ingreso/gasto, etiqueta 50/30/20 opcional. Se siembra un set de categorías por
   defecto la primera vez que el usuario visita `/categorias` o `/transacciones`
-  (`ensureDefaultCategories`). Esquema/constraints verificados con un script
-  puntual contra la base de datos (jerarquía, borrado con SetNull, ver commits);
-  falta el paso a paso por la interfaz, que solo puede hacer el usuario (Claude
-  no puede iniciar sesión ni crear cuentas).
+  (`ensureDefaultCategories`). Verificado con script puntual contra la base de
+  datos (jerarquía, borrado con SetNull) y con una ruta temporal sin login
+  (datos falsos, borrada después) para probar la interactividad real del
+  diálogo: filtro de categoría padre por tipo, reseteo al cambiar de tipo,
+  precarga en edición. Falta solo que el usuario confirme el guardado real con
+  su sesión (Claude no puede iniciar sesión ni crear cuentas).
 - 🔶 CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
   editar, eliminar; selector de cuenta, categoría (jerárquica, filtrada por
   ingreso/gasto) y etiquetas libres (se crean al vuelo, tabla `tags` +
   `transaction_tags`). El formulario pide tipo (ingreso/gasto) + importe positivo
   y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida,
-  no es editable en el formulario. Esquema/constraints verificados igual que
-  categorías (incluye el upsert de tags repetidas y el borrado en cascada);
-  falta el paso a paso por la interfaz por parte del usuario.
+  no es editable en el formulario. Verificado igual que categorías: script
+  contra la base de datos (tags repetidas, borrado en cascada) + ruta temporal
+  sin login para probar el diálogo (filtro de categoría por tipo ingreso/gasto,
+  precarga en edición incluidas etiquetas, mensaje de error sin sesión sin
+  romper la página). Falta que el usuario confirme el guardado real.
 - ⬜ Reglas de auto-categorización por comerciante.
 - ⬜ División de transacciones.
 - ⬜ Conversión de divisa (Frankfurter) y `amount_eur` real — de momento
