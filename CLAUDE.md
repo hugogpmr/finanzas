@@ -30,6 +30,7 @@ Plan técnico completo (roadmap por sprints, fórmulas, esquema de datos detalla
 - Autenticación: Supabase Auth vía `@supabase/ssr`. `src/lib/supabase/{client,server,middleware}.ts` son los tres clientes (browser, Server Components/Actions, proxy). `src/proxy.ts` protege todo lo que no esté en `/login`, `/registro` o `/auth`.
 - **Leer/escribir datos de usuario: siempre con el cliente de Supabase (`createClient()` de `src/lib/supabase/server.ts`), nunca con Prisma.** `DATABASE_URL` conecta como el rol `postgres` (dueño de las tablas), que **salta RLS** — usar Prisma para queries filtraría "por las buenas" pero no por diseño, y un olvido de `where: { userId }` filtraría datos de todos los usuarios. Prisma se queda solo para `schema.prisma` y migraciones. Los tipos de cada feature (p. ej. `src/features/accounts/types.ts`) se escriben a mano en snake_case porque así es como los devuelve PostgREST/supabase-js, no en camelCase como los modelos de Prisma.
 - `numeric` de Postgres llega desde supabase-js como **string**, no `number` (evita perder precisión) — convertir con `Number()` solo al formatear o calcular, nunca asumir que ya es numérico.
+- **Para "hoy" en formato YYYY-MM-DD, usar siempre `toDateStr`/`todayDateStr` de `src/lib/date.ts`, nunca `date.toISOString().slice(0, 10)`.** `toISOString()` convierte a UTC: para España (UTC+1/+2) eso resta horas y puede devolver el día de ayer (nos pasó de verdad en el valor por defecto de la fecha de una transacción nueva y en el rango de fechas del dashboard — Sprint 3, ver `src/lib/date.ts`).
 - **`@default(uuid())` y `@updatedAt` de Prisma son trucos de Prisma Client, no de la base de datos.** Como escribimos con supabase-js (no Prisma Client), esos valores nunca se generaban y los inserts fallaban con "null value in column ... violates not-null constraint" (nos pasó con `id` y con `updated_at` en `accounts`). Para cualquier columna así: `id` → `@default(dbgenerated("gen_random_uuid()"))`; `updatedAt` → `@default(now())` además de `@updatedAt`, más un trigger `BEFORE UPDATE` que llame a `set_updated_at()` (ya creada, ver `prisma/migrations/20260914234525_updated_at_default_and_trigger/`) para que se refresque también en los `update()` de supabase-js.
 
 ## Comandos
@@ -153,6 +154,43 @@ Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`
   recibe `DashboardData` ya calculado) está separado de `page.tsx` (fetch) para
   poder montarlo con datos falsos en `/devtest` sin sesión real.
 
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 2. Siguiente
-en orden estricto: **Sprint 3 — Presupuestos y objetivos** (50/30/20, zero-based,
-sobres, pay-yourself-first, alertas de límite, objetivos de ahorro).
+Sprint 3 completo — Presupuestos y objetivos (`src/features/budgets`,
+`src/features/goals`, `/presupuestos`, `/objetivos`):
+- ✅ `src/lib/transactions/attribution.ts` extrae el prorrateo de divisiones por
+  tipo de cambio (antes duplicado en el dashboard) a una función pura y
+  testeada, reutilizada por `src/lib/transactions/category-totals.ts` (gasto
+  por categoría en un rango de fechas, usado por presupuestos).
+- ✅ CRUD de presupuestos (`Budget`) y sus líneas (`BudgetLine`, una por
+  categoría). Solo un presupuesto puede estar activo a la vez: al crear uno
+  se desactivan los demás; también se puede reactivar uno desde el menú de
+  la fila. **El enum `BudgetMethod` de Postgres usa el valor real `50_30_20`**
+  (no `fifty_thirty_twenty`, que es solo el nombre que le da Prisma porque un
+  identificador no puede empezar por un número — ver `src/features/budgets/types.ts`).
+- ✅ `src/features/budgets/period.ts` calcula la ventana del periodo activo
+  (mes o semana que contiene hoy, no un rango fijo desde `start_date`).
+  El rollover ("sobres") solo mira **un** periodo hacia atrás, no acumula
+  histórico completo: `effectiveAllocated = allocated + max(0, allocated_anterior − gastado_anterior)`.
+- ✅ Alertas de límite: `alert_threshold_pct` por línea pinta la barra de
+  progreso en ámbar (cerca del límite) o rojo (superado) — sin envío de
+  email/push, es un MVP visual.
+- ✅ CRUD de objetivos (`Goal`): ahorro, fondo de emergencia o sinking fund.
+  Proyección lineal en `src/lib/finance/goals.ts` (`monthsToGoal`, sin
+  rentabilidad asumida, a diferencia de `yearsToFire` en `kpis.ts`).
+- ✅ Un objetivo con `linked_account_id` **no usa su `current_amount` guardado**:
+  el importe actual se calcula siempre a partir del saldo real de esa cuenta
+  (convertido a EUR), para no tener dos fuentes de verdad que se desincronicen
+  (ver `src/features/goals/queries.ts`). El diálogo oculta el campo manual
+  cuando hay cuenta enlazada.
+- ✅ Plantilla de fondo de emergencia: botón que pre-rellena el diálogo de
+  objetivo (6 meses de gasto esencial, reutilizando `avgEssentialMonthlyExpensesEur`
+  ya calculado por el dashboard del Sprint 2) en vez de pedir el dato otra vez.
+- 🐛 De paso se corrigió un bug real de Sprint 1/2: la fecha por defecto de una
+  transacción nueva y el rango de fechas del dashboard usaban
+  `toISOString().slice(0,10)`, que en España podía dar el día de ayer (ver la
+  nota en Convenciones sobre `src/lib/date.ts`).
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 3. Siguiente
+en orden estricto: **Sprint 4 — Deudas con simuladores** (CRUD de deudas,
+avalancha vs. bola de nieve, comparativa de meses e intereses ahorrados). El
+CRUD de deudas hará que el DTI del dashboard (Sprint 2) empiece a dar datos
+reales sin tocarlo.

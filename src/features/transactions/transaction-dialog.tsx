@@ -13,6 +13,7 @@ import { Plus, X } from "lucide-react";
 import { upsertTransaction, type TransactionFormState } from "./actions";
 import { TRANSACTION_KINDS, type Transaction, type TransactionKind } from "./types";
 import { sortCategoriesByHierarchy, type Category } from "@/features/categories/types";
+import { todayDateStr } from "@/lib/date";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,10 +43,6 @@ type TransactionDialogProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 type SplitRow = { key: string; categoryId: string; amount: string; note: string };
 
@@ -262,7 +259,7 @@ export function TransactionDialog({
                 id="date"
                 name="date"
                 type="date"
-                defaultValue={transaction?.date ?? todayIso()}
+                defaultValue={transaction?.date ?? todayDateStr()}
                 required
               />
             </div>

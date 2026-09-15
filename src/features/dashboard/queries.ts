@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getEurRate } from "@/lib/fx";
+import { toDateStr } from "@/lib/date";
+import { attributeTransactionParts } from "@/lib/transactions/attribution";
 import {
   dtiPct,
   emergencyFundMonths,
@@ -123,6 +125,7 @@ export type DashboardData = {
   kpis: {
     avgMonthlyIncomeEur: number | null;
     avgMonthlyExpensesEur: number | null;
+    avgEssentialMonthlyExpensesEur: number | null;
     netCashFlowEur: number | null;
     savingsRatePct: number | null;
     fixedExpenseRatioPct: number | null;
@@ -156,6 +159,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     kpis: {
       avgMonthlyIncomeEur: null,
       avgMonthlyExpensesEur: null,
+      avgEssentialMonthlyExpensesEur: null,
       netCashFlowEur: null,
       savingsRatePct: null,
       fixedExpenseRatioPct: null,
@@ -181,8 +185,8 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const today = new Date();
   const historyStart = new Date(today.getFullYear(), today.getMonth() - (MONTHS_OF_HISTORY - 1), 1);
-  const historyStartStr = historyStart.toISOString().slice(0, 10);
-  const todayStr = today.toISOString().slice(0, 10);
+  const historyStartStr = toDateStr(historyStart);
+  const todayStr = toDateStr(today);
 
   const [{ data: accountsData }, { data: categoriesData }, { data: transactionsData }, { data: debtsData }] =
     await Promise.all([
@@ -275,22 +279,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       if (isIncome) {
         bucket.incomeEur += amountEur;
       } else {
-        const absAmountEur = Math.abs(amountEur);
-        bucket.expensesEur += absAmountEur;
+        bucket.expensesEur += Math.abs(amountEur);
 
-        // Prorratea la conversión EUR entre las divisiones usando el mismo
-        // tipo de cambio de la transacción (amount_eur / amount), ya que
-        // transaction_splits no guarda su propio importe en EUR.
-        const fxRatio = Number(tx.amount) !== 0 ? amountEur / Number(tx.amount) : 0;
-        const parts: { categoryId: string | null; amountEur: number }[] =
-          tx.is_split && tx.splits && tx.splits.length > 0
-            ? tx.splits.map((s) => ({
-                categoryId: s.category_id,
-                amountEur: Math.abs(Number(s.amount) * fxRatio),
-              }))
-            : [{ categoryId: tx.category_id, amountEur: absAmountEur }];
-
-        for (const part of parts) {
+        for (const part of attributeTransactionParts(tx)) {
           const category = part.categoryId ? categoriesById.get(part.categoryId) : undefined;
           if (category?.is_fixed) bucket.fixedExpensesEur += part.amountEur;
           if (isHousingCategory(part.categoryId, categoriesById)) {
@@ -358,6 +349,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     kpis: {
       avgMonthlyIncomeEur,
       avgMonthlyExpensesEur,
+      avgEssentialMonthlyExpensesEur: avgNeeds,
       netCashFlowEur,
       savingsRatePct:
         avgMonthlyIncomeEur !== null && avgMonthlyExpensesEur !== null

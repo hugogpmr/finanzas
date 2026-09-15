@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { ArrowLeftRight, LayoutDashboard, LogOut, Tags, Wallet, Wand2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  LayoutDashboard,
+  LogOut,
+  PiggyBank,
+  Tags,
+  Target,
+  Wallet,
+  Wand2,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "../(auth)/actions";
 import { Button } from "@/components/ui/button";
@@ -71,6 +80,18 @@ export default async function DashboardLayout({
                   <SidebarMenuButton render={<Link href="/reglas" />}>
                     <Wand2 />
                     <span>Reglas</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/presupuestos" />}>
+                    <PiggyBank />
+                    <span>Presupuestos</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/objetivos" />}>
+                    <Target />
+                    <span>Objetivos</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
