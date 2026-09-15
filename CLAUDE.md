@@ -72,8 +72,21 @@ Sprint 0 casi cerrado:
 Sprint 1 en progreso:
 - ✅ CRUD de cuentas (`src/features/accounts`, `/cuentas`): crear, editar, eliminar,
   agrupadas en Activos/Pasivos con subtotal. Verificado en producción por el usuario.
-- ⬜ CRUD de transacciones con categorías jerárquicas y tags.
+- 🔶 CRUD de categorías (`src/features/categories`, `/categorias`): crear, editar,
+  eliminar; jerarquía a 2 niveles (categoría principal + subcategorías), tipo
+  ingreso/gasto, etiqueta 50/30/20 opcional. Se siembra un set de categorías por
+  defecto la primera vez que el usuario visita `/categorias` o `/transacciones`
+  (`ensureDefaultCategories`). Pendiente de verificar en producción.
+- 🔶 CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
+  editar, eliminar; selector de cuenta, categoría (jerárquica, filtrada por
+  ingreso/gasto) y etiquetas libres (se crean al vuelo, tabla `tags` +
+  `transaction_tags`). El formulario pide tipo (ingreso/gasto) + importe positivo
+  y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida,
+  no es editable en el formulario. Pendiente de verificar en producción.
 - ⬜ Reglas de auto-categorización por comerciante.
 - ⬜ División de transacciones.
-- ⬜ Conversión de divisa (Frankfurter) y `amount_eur`.
+- ⬜ Conversión de divisa (Frankfurter) y `amount_eur` real — de momento
+  `amount_eur = amount` y `fx_rate = 1` siempre (ver TODO en
+  `src/features/transactions/actions.ts`), independientemente de la divisa de la
+  cuenta. Corregir en cuanto se implemente la integración con Frankfurter.
 - ⬜ Detección básica de recurrentes.
