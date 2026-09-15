@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteCategory } from "./actions";
 import { CategoryDialog } from "./category-dialog";
 import type { Category } from "./types";
@@ -45,7 +46,10 @@ export function CategoryRowActions({
                   `¿Eliminar la categoría "${category.name}"? Las transacciones y subcategorías asociadas quedarán sin categorizar.`,
                 )
               ) {
-                startTransition(() => deleteCategory(category.id));
+                startTransition(async () => {
+                  const result = await deleteCategory(category.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

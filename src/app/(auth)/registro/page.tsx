@@ -57,10 +57,10 @@ export default function RegistroPage() {
               name="password"
               type="password"
               required
-              minLength={8}
+              minLength={12}
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">Mínimo 8 caracteres.</p>
+            <p className="text-xs text-muted-foreground">Mínimo 12 caracteres.</p>
           </div>
           {state?.error && (
             <p className="text-sm text-destructive">{state.error}</p>

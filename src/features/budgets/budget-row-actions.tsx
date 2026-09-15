@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteBudget, setActiveBudget } from "./actions";
 import { BudgetDialog } from "./budget-dialog";
 import type { Budget } from "./types";
@@ -43,7 +44,10 @@ export function BudgetRowActions({ budget }: { budget: Budget }) {
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar este presupuesto y todas sus líneas?")) {
-                startTransition(() => deleteBudget(budget.id));
+                startTransition(async () => {
+                  const result = await deleteBudget(budget.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

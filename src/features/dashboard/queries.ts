@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getEurRate } from "@/lib/fx";
 import { toDateStr } from "@/lib/date";
 import { attributeTransactionParts } from "@/lib/transactions/attribution";
+import { aggregateNetWorth } from "@/lib/finance/net-worth";
 import {
   dtiPct,
   emergencyFundMonths,
@@ -11,14 +12,12 @@ import {
   liquidityRatio,
   needsWantsSavingsPct,
   netCashFlow,
-  netWorth,
   netWorthMultiple,
   savingsRatePct,
   yearsToFire,
   type NeedsWantsSavingsBreakdown,
 } from "@/lib/finance/kpis";
 
-const LIQUID_ACCOUNT_TYPES = new Set(["checking", "savings", "cash"]);
 const MONTHS_OF_HISTORY = 12;
 const AVERAGE_OVER_MONTHS = 3;
 
@@ -223,22 +222,16 @@ export async function getDashboardData(): Promise<DashboardData> {
     }),
   );
 
-  let totalAssetsEur = 0;
-  let totalLiabilitiesEur = 0;
-  let liquidAssetsEur = 0;
-  for (const account of accounts) {
-    const rate = ratesByCurrency.get(account.currency) ?? 1;
-    const balanceEur = Number(account.current_balance) * rate;
-    if (account.account_class === "asset") {
-      totalAssetsEur += balanceEur;
-      if (LIQUID_ACCOUNT_TYPES.has(account.type)) liquidAssetsEur += balanceEur;
-    } else {
-      totalLiabilitiesEur += balanceEur;
-    }
-  }
-
-  const netWorthEur = netWorth(totalAssetsEur, totalLiabilitiesEur);
-  const liquidNetWorthEur = netWorth(liquidAssetsEur, totalLiabilitiesEur);
+  const {
+    totalAssetsEur,
+    totalLiabilitiesEur,
+    liquidAssetsEur,
+    netWorthEur,
+    liquidNetWorthEur,
+  } = aggregateNetWorth(
+    accounts.map((a) => ({ ...a, current_balance: Number(a.current_balance) })),
+    ratesByCurrency,
+  );
 
   // --- Transacciones: buckets por mes calendario ---
   const buckets = new Map<string, MonthBucket>();

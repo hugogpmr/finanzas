@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteGoal } from "./actions";
 import { GoalDialog } from "./goal-dialog";
 import type { Goal } from "./types";
@@ -41,7 +42,10 @@ export function GoalRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar este objetivo?")) {
-                startTransition(() => deleteGoal(goal.id));
+                startTransition(async () => {
+                  const result = await deleteGoal(goal.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

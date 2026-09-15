@@ -93,14 +93,17 @@ export async function upsertGoal(
   return { success: true };
 }
 
-export async function deleteGoal(id: string) {
+export async function deleteGoal(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
-  await supabase.from("goals").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("goals").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return { error: error.message };
+
   revalidatePath("/objetivos");
+  return {};
 }

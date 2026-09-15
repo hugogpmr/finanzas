@@ -96,15 +96,18 @@ export async function upsertCategory(
   return { success: true };
 }
 
-export async function deleteCategory(id: string) {
+export async function deleteCategory(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
-  await supabase.from("categories").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("categories").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return { error: error.message };
+
   revalidatePath("/categorias");
   revalidatePath("/transacciones");
+  return {};
 }

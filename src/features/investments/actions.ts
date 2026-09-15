@@ -90,18 +90,21 @@ export async function upsertHolding(
   return { success: true };
 }
 
-export async function deleteHolding(id: string) {
+export async function deleteHolding(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
   // ON DELETE CASCADE en investment_transactions/price_snapshots (ver
   // prisma/schema.prisma) se lleva el historial de la posición con ella.
-  await supabase.from("holdings").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("holdings").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return { error: error.message };
+
   revalidatePath("/inversiones");
+  return {};
 }
 
 export type InvestmentTxFormState = { error?: string; success?: boolean } | undefined;
@@ -210,16 +213,23 @@ export async function upsertInvestmentTransaction(
   return { success: true };
 }
 
-export async function deleteInvestmentTransaction(id: string) {
+export async function deleteInvestmentTransaction(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
-  await supabase.from("investment_transactions").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase
+    .from("investment_transactions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+
   revalidatePath("/inversiones");
+  return {};
 }
 
 export type RefreshPricesResult = { error?: string; updated?: number; skipped?: number };

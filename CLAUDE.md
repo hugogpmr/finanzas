@@ -85,115 +85,54 @@ producción, layout con sidebar. Cron keep-alive de GitHub Actions
 ruta pública vía anon key); si GitHub lo desactiva por inactividad del repo
 (~60 días sin commits) hay que relanzarlo a mano desde la pestaña Actions.
 
-Sprint 1 completo — CRUD base, verificado en producción: cuentas multi-divisa
-(`/cuentas`), categorías a 2 niveles con etiqueta 50/30/20 opcional
-(`/categorias`, `ensureDefaultCategories` siembra un set por defecto),
-transacciones con categoría jerárquica/etiquetas/división en varias
-categorías (`/transacciones`, `transaction_splits`), reglas de
-auto-categorización (`/reglas`), conversión de divisa real cacheada
-(`src/lib/fx.ts`, Frankfurter) y detección básica de recurrentes (3+
-transacciones iguales de comercio+importe+divisa).
+Sprints 1-6 completos: cuentas multi-divisa (`/cuentas`), categorías con
+reglas de auto-categorización (`/categorias`, `/reglas`), transacciones con
+splits/etiquetas/recurrentes (`/transacciones`), dashboard de KPIs
+(`/dashboard`, `src/lib/finance/kpis.ts`), presupuestos y objetivos
+(`/presupuestos`, `/objetivos`), deudas con simulador avalancha/bola de nieve
+(`/deudas`, `src/lib/finance/debts.ts`) e inversiones con XIRR/TWR
+(`/inversiones`, `src/lib/finance/xirr.ts`+`twr.ts`) e importación CSV
+(`/importar`, `src/lib/csv/parse-row.ts`).
 
-Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`):
-- ✅ `src/lib/finance/kpis.ts`: funciones puras (cash flow, tasa de ahorro,
-  gastos fijos, 50/30/20, fondo de emergencia, liquidez, DTI, vivienda,
-  patrimonio neto, múltiplo, FIRE number, años hasta FIRE) — primer módulo
-  con tests (Vitest, `vitest.config.ts` con `resolve.tsconfigPaths` nativo).
-- ✅ `src/features/dashboard/queries.ts` agrega cuentas+transacciones (12
-  meses)+`debts`; los importes "mensuales" son el **promedio de los últimos 3
-  meses con movimientos**, no el mes en curso a secas. El patrimonio neto usa
-  el saldo actual de cada cuenta a EUR con el tipo de cambio de hoy.
-- ✅ "Ratio de vivienda" detecta la categoría por **nombre** (`vivienda`), no
-  hay un flag dedicado en el esquema. Categorías: checkbox "Gasto fijo"
-  (`is_fixed`). Gráficas con Recharts.
-- ✅ `DashboardView` (presentación pura) separado de `page.tsx` (fetch) para
-  poder montarlo con datos falsos en `/devtest` sin sesión real (los sprints
-  siguientes prueban igual por `/devtest` pero sin extraer un componente de
-  vista propio: alcanza con montar la página real con datos falsos).
+Gotchas de esos sprints que siguen siendo relevantes:
+- **`BudgetMethod` en Postgres usa el valor real `50_30_20`**, no
+  `fifty_thirty_twenty` (nombre de Prisma: un identificador no puede empezar
+  por un número). **`interest_rate`/`apr` de `debts` son puntos porcentuales**
+  (19.5 = 19,5%), no una fracción.
+- Simulador de deudas: el sobrante sin usar en el mes se sube al fondo
+  "extra" del mes siguiente — si no, avalancha podía salir peor que bola de
+  nieve (test de regresión en `tests/finance/debts.test.ts`).
+- XIRR (`src/lib/finance/xirr.ts`, envuelve `@webcarrot/xirr`) y TWR
+  (`src/lib/finance/twr.ts`, a mano) siguen la convención de signo de
+  `investment_transactions.amount` (negativo = entra dinero). TWR por
+  posición enlaza periodos entre `price_snapshots` consecutivos.
+- Importación CSV: duplicado = misma cuenta+fecha+importe+comercio (o
+  descripción) ya existente; el usuario puede forzar igualmente su importación.
 
-Sprint 3 completo — Presupuestos y objetivos (`src/features/budgets`,
-`src/features/goals`, `/presupuestos`, `/objetivos`):
-- ✅ `src/lib/transactions/attribution.ts` prorratea divisiones por tipo de
-  cambio (reutilizado por presupuestos y por el dashboard). CRUD de
-  presupuestos y líneas: solo uno activo a la vez. **El enum `BudgetMethod`
-  usa el valor real `50_30_20`**, no `fifty_thirty_twenty` (nombre de
-  Prisma: un identificador no puede empezar por un número).
-- ✅ `src/features/budgets/period.ts` calcula la ventana del periodo activo
-  (mes/semana que contiene hoy). El rollover solo mira **un** periodo atrás.
-  Alertas de límite pintan la barra en ámbar/rojo (visual, sin email/push).
-- ✅ CRUD de objetivos: uno con `linked_account_id` usa siempre el saldo real
-  de esa cuenta como importe actual, no el campo guardado (evita dos fuentes
-  de verdad). La plantilla de fondo de emergencia reutiliza
-  `avgEssentialMonthlyExpensesEur` ya calculado por el dashboard.
-- 🐛 De paso se corrigió un bug real de Sprint 1/2: la fecha por defecto de
-  una transacción y el rango del dashboard usaban `toISOString().slice(0,10)`,
-  que en España podía dar el día de ayer (ver `src/lib/date.ts`).
+Sprint 7 completo — Pulido UX/UI + seguridad:
+- ✅ Modo oscuro con `next-themes` (`src/components/theme-provider.tsx` +
+  `theme-toggle.tsx`); `loading.tsx`/`error.tsx` en `(dashboard)` y `error.tsx`
+  raíz; `Toaster` (sonner) en el layout raíz. Las 10 acciones `deleteX` ahora
+  devuelven `{error?}` y sus row-actions muestran un toast si falla, en vez
+  de fallar en silencio.
+- ✅ MFA (TOTP) opcional vía Supabase Auth (`/ajustes`,
+  `src/features/security/mfa-enrollment.tsx`). Activarlo no basta por sí
+  solo: `src/lib/supabase/middleware.ts` exige aal2
+  (`getAuthenticatorAssuranceLevel()`) y redirige a `/mfa-verify` si falta —
+  si no, el segundo factor nunca se comprobaría de verdad al iniciar sesión.
+- ✅ Contraseña mínima subida a 12 caracteres. El chequeo de contraseñas
+  filtradas (HaveIBeenPwned) es un ajuste de Supabase Dashboard
+  (Authentication → Policies), no de código — pendiente de que el usuario lo
+  active a mano.
+- ✅ Revisión de RLS: las 17 tablas de usuario tienen RLS y policy propia
+  (auditado con una query a `pg_policies`); sin cambios necesarios.
+- ✅ Snapshot mensual de patrimonio neto: `src/lib/finance/net-worth.ts`
+  (extraído del dashboard y testeado, ambos lo reutilizan ahora) +
+  `POST /api/snapshot-net-worth` con `SUPABASE_SERVICE_ROLE_KEY` (salta RLS
+  para escribir de todos los usuarios a la vez) protegido por `CRON_SECRET`,
+  llamado el día 1 de cada mes por `.github/workflows/net-worth-snapshot.yml`.
+  **Pendiente que el usuario añada `SUPABASE_SERVICE_ROLE_KEY` y
+  `CRON_SECRET` en Vercel, y `CRON_SECRET` como secret del repo en GitHub**
+  (ver `.env.example`) — sin eso el cron falla con 401.
 
-Sprint 4 completo — Deudas con simuladores (`src/features/debts`, `/deudas`):
-- ✅ CRUD de deudas (`Debt`). **`interest_rate`/`apr` se guardan como puntos
-  porcentuales (19.5 = 19,5%), no como fracción** — es como el usuario los ve
-  en el papel de su préstamo/tarjeta.
-- ✅ `src/lib/finance/debts.ts`: motor de amortización mes a mes puro
-  (`simulateDebtPayoff`, `compareDebtStrategies`). Avalancha ordena por TIN
-  descendente, bola de nieve por saldo ascendente; el extra mensual (más las
-  cuotas que se liberan al saldar una deuda) se dirige a la primera deuda
-  activa del orden, con cascada al resto de deudas **dentro del mismo mes**
-  si sobra. Detecta amortización negativa (cuota que no cubre el interés) y
-  tiene un tope de seguridad de 600 meses para no simular para siempre.
-- 🐛 Bug real encontrado con los tests: si la deuda que se saldaba con
-  sobrante era la última del orden, ese sobrante se descartaba en vez de
-  pasar al mes siguiente — con pocas deudas y sin extra mensual, eso podía
-  hacer que avalancha saliera (mal) más cara que bola de nieve, violando la
-  propiedad matemática de que avalancha nunca es peor. Corregido: el
-  sobrante no usado en el mes se sube al fondo "extra" permanente.
-- ✅ `DebtSimulator` (cliente): recalcula en vivo al cambiar el extra mensual,
-  sin pasar por el servidor (la función es pura, se ejecuta en el navegador).
-  El "orden" que muestra cada tarjeta es el orden **real de liquidación**
-  (cuándo se salda cada deuda), que solo coincide con la prioridad de la
-  estrategia cuando hay extra suficiente para que el orden importe.
-- ✅ El DTI del dashboard (Sprint 2, `dtiPct` con `debts.minimum_payment`)
-  ya da datos reales en cuanto hay deudas, sin haber tocado ese código.
-
-Sprint 5 completo — Inversiones con TWR/XIRR (`src/features/investments`,
-`/inversiones`):
-- ✅ CRUD de posiciones (`Holding`) y movimientos (`InvestmentTransaction`):
-  igual que `accounts.current_balance`, `quantity`/`current_price` se
-  mantienen a mano, no se recalculan solos desde el historial.
-- ✅ `src/lib/finance/xirr.ts` envuelve `@webcarrot/xirr` (Newton-Raphson);
-  test con el ejemplo del README de `xirr` (-1000/-2500/-1000, valor final
-  5050 ⇒ 0.2504234710540838, precisión 4: `@webcarrot/xirr` usa un day-count
-  ligeramente distinto, no es un bug). `src/lib/finance/twr.ts` codifica TWR
-  a mano (enlace geométrico de subperiodos): ninguna librería JS lo trae.
-  Convención de signo de `amount` = flujo de caja real (compra/aportación/
-  comisión negativo, venta/retirada/dividendo positivo), ver
-  `src/lib/finance/CLAUDE.md`.
-- ✅ TWR por posición enlaza los periodos entre `price_snapshots`
-  consecutivos, con flujo externo = compras/ventas en ese rango de fechas —
-  simplificación honesta sin valoración diaria continua (ver
-  `src/features/investments/queries.ts`).
-- ✅ Botón "Actualizar precios" contra Twelve Data (`TWELVE_DATA_API_KEY`
-  opcional, plan gratis 800 llamadas/día): sin la clave no falla, solo
-  informa — el precio se puede seguir editando a mano.
-- ✅ Asignación de activos por clase/sector/geografía/divisa y yield-on-cost
-  (dividendos de los últimos 12 meses / coste de adquisición).
-
-Sprint 6 completo — Importación CSV (`src/features/import`, `/importar`):
-- ✅ `src/lib/csv/parse-row.ts`: parseo puro y testeado de fecha (ISO o
-  DD/MM/YYYY español, no MM/DD/YYYY) e importe (acepta `1.234,56` y
-  `1,234.56`; con un solo separador se asume que es el decimal). Devuelve
-  `null` ante formatos irreconocibles en vez de adivinar mal — la
-  previsualización es la red de seguridad real, no un parseo perfecto.
-- ✅ Flujo en 3 pasos (subir CSV con `papaparse` en el navegador → mapear
-  columnas a fecha/importe/comercio/descripción → previsualizar): la
-  previsualización llama a `previewImport` (server action) para marcar
-  duplicados y sugerir categoría antes de importar nada.
-- ✅ Duplicado = misma cuenta+fecha+importe+comercio (o descripción si no hay
-  comercio) que una transacción ya existente; empieza sin seleccionar en la
-  tabla pero el usuario puede forzar su importación con el checkbox.
-- ✅ Reutiliza `matchCategorizationRule` (ya usado por la creación manual de
-  transacciones) para sugerir categoría; el usuario puede cambiarla por fila.
-
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 6. Siguiente
-en orden estricto: **Sprint 7 — Pulido UX/UI + seguridad** (estados de carga/
-vacío/error, responsive, modo oscuro, MFA opcional, revisión de RLS,
-snapshot mensual de patrimonio neto automatizado).
+Con esto se completa el roadmap de `docs/plan-tecnico.md` (Sprints 0-7).

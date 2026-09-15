@@ -45,8 +45,8 @@ export async function signup(
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  if (password.length < 8) {
-    return { error: "La contraseña debe tener al menos 8 caracteres." };
+  if (password.length < 12) {
+    return { error: "La contraseña debe tener al menos 12 caracteres." };
   }
 
   const supabase = await createClient();
@@ -68,6 +68,44 @@ export async function signup(
   return {
     success: "Te hemos enviado un email para confirmar tu cuenta. Revisa tu bandeja de entrada.",
   };
+}
+
+export async function verifyMfaCode(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const code = String(formData.get("code") ?? "").trim();
+  if (code.length !== 6) {
+    return { error: "El código debe tener 6 dígitos." };
+  }
+
+  const supabase = await createClient();
+  const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+  const factor = factors?.totp.find((f) => f.status === "verified");
+
+  if (factorsError || !factor) {
+    return { error: "No se encontró ningún factor de verificación activo." };
+  }
+
+  const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+    factorId: factor.id,
+  });
+  if (challengeError || !challenge) {
+    return { error: challengeError?.message ?? "No se pudo iniciar la verificación." };
+  }
+
+  const { error: verifyError } = await supabase.auth.mfa.verify({
+    factorId: factor.id,
+    challengeId: challenge.id,
+    code,
+  });
+
+  if (verifyError) {
+    return { error: "Código incorrecto. Revisa la hora de tu móvil e inténtalo de nuevo." };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
 }
 
 export async function logout() {

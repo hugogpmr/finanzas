@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   PiggyBank,
+  Settings,
   Tags,
   Target,
   TrendingUp,
@@ -15,6 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "../(auth)/actions";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -115,6 +117,12 @@ export default async function DashboardLayout({
                     <span>Importar CSV</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/ajustes" />}>
+                    <Settings />
+                    <span>Ajustes</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -137,8 +145,9 @@ export default async function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-12 items-center border-b px-4">
+        <header className="flex h-12 items-center justify-between border-b px-4">
           <SidebarTrigger />
+          <ThemeToggle />
         </header>
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>

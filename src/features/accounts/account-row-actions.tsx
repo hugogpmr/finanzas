@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteAccount } from "./actions";
 import { AccountDialog } from "./account-dialog";
 import type { Account } from "./types";
@@ -39,7 +40,10 @@ export function AccountRowActions({ account }: { account: Account }) {
                   `¿Eliminar la cuenta "${account.name}"? Esta acción no se puede deshacer.`,
                 )
               ) {
-                startTransition(() => deleteAccount(account.id));
+                startTransition(async () => {
+                  const result = await deleteAccount(account.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

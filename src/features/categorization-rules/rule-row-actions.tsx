@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteRule } from "./actions";
 import { RuleDialog } from "./rule-dialog";
 import type { CategorizationRule } from "./types";
@@ -42,7 +43,10 @@ export function RuleRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar esta regla?")) {
-                startTransition(() => deleteRule(rule.id));
+                startTransition(async () => {
+                  const result = await deleteRule(rule.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

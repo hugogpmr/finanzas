@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteInvestmentTransaction } from "./actions";
 import { InvestmentTransactionDialog } from "./investment-transaction-dialog";
 import type { Holding, InvestmentTransaction } from "./types";
@@ -41,7 +42,10 @@ export function InvestmentTransactionRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar este movimiento?")) {
-                startTransition(() => deleteInvestmentTransaction(transaction.id));
+                startTransition(async () => {
+                  const result = await deleteInvestmentTransaction(transaction.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

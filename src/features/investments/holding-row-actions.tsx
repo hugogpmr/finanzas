@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteHolding } from "./actions";
 import { HoldingDialog } from "./holding-dialog";
 import type { Holding } from "./types";
@@ -41,7 +42,10 @@ export function HoldingRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar esta posición y todo su historial de movimientos?")) {
-                startTransition(() => deleteHolding(holding.id));
+                startTransition(async () => {
+                  const result = await deleteHolding(holding.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

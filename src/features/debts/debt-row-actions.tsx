@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteDebt } from "./actions";
 import { DebtDialog } from "./debt-dialog";
 import type { Debt } from "./types";
@@ -41,7 +42,10 @@ export function DebtRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar esta deuda?")) {
-                startTransition(() => deleteDebt(debt.id));
+                startTransition(async () => {
+                  const result = await deleteDebt(debt.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >

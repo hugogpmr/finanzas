@@ -84,16 +84,19 @@ export async function upsertBudget(
   return { success: true };
 }
 
-export async function deleteBudget(id: string) {
+export async function deleteBudget(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
-  await supabase.from("budgets").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("budgets").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return { error: error.message };
+
   revalidatePath("/presupuestos");
+  return {};
 }
 
 export async function setActiveBudget(id: string) {
@@ -183,14 +186,17 @@ export async function upsertBudgetLine(
   return { success: true };
 }
 
-export async function deleteBudgetLine(id: string) {
+export async function deleteBudgetLine(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) return { error: "No has iniciado sesión." };
 
-  await supabase.from("budget_lines").delete().eq("id", id);
+  const { error } = await supabase.from("budget_lines").delete().eq("id", id);
+  if (error) return { error: error.message };
+
   revalidatePath("/presupuestos");
+  return {};
 }

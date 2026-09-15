@@ -1,0 +1,28 @@
+name: Net worth monthly snapshot
+
+# Guarda un snapshot de patrimonio neto de cada usuario el día 1 de cada mes
+# (docs/plan-tecnico.md, Sprint 7). Llama a /api/snapshot-net-worth con
+# CRON_SECRET (secreto del repo, debe coincidir con la variable de entorno
+# del mismo nombre en Vercel) porque esa ruta usa la service_role key para
+# escribir datos de todos los usuarios a la vez, sin sesión de por medio.
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch: {}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar a /api/snapshot-net-worth
+        run: |
+          url="https://finanzas-kappa-five.vercel.app/api/snapshot-net-worth"
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$url")
+          echo "HTTP $status"
+          cat /tmp/response.json
+          if [ "$status" -ne 200 ]; then
+            echo "Snapshot de patrimonio neto falló con status $status"
+            exit 1
+          fi

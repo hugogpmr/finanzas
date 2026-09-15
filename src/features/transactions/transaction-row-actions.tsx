@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { deleteTransaction } from "./actions";
 import { TransactionDialog } from "./transaction-dialog";
 import type { Transaction } from "./types";
@@ -44,7 +45,10 @@ export function TransactionRowActions({
             disabled={isPending}
             onClick={() => {
               if (confirm("¿Eliminar esta transacción? Esta acción no se puede deshacer.")) {
-                startTransition(() => deleteTransaction(transaction.id));
+                startTransition(async () => {
+                  const result = await deleteTransaction(transaction.id);
+                  if (result?.error) toast.error(result.error);
+                });
               }
             }}
           >
