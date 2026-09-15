@@ -77,53 +77,29 @@ confirme.
 
 ## Estado actual
 
-Sprint 0 cerrado:
-- ✅ Proyecto Next.js + Tailwind + shadcn/ui creado.
-- ✅ Cuentas de GitHub, Supabase y Vercel creadas por el usuario.
-- ✅ Esquema Prisma completo (`prisma/schema.prisma`) migrado a Supabase, con RLS activada
-  en todas las tablas.
-- ✅ Repo subido a GitHub, proyecto conectado y desplegado en Vercel.
-- ✅ Supabase Auth (login/registro) y proxy que protege `/dashboard`.
-- ✅ Layout base del dashboard con sidebar de shadcn/ui y logout.
-- ✅ Site URL/Redirect URLs configuradas en Supabase y `NEXT_PUBLIC_SITE_URL` en Vercel.
-  Flujo de registro + confirmación por email verificado de punta a punta en producción.
-- ✅ Cron keep-alive de GitHub Actions (`.github/workflows/keepalive.yml`, cada 3 días)
-  contra `GET /api/keepalive` (ruta pública, hace un `select` real vía anon key —
-  no hace falta la service_role key). Si GitHub desactiva el cron por inactividad
-  del repo (~60 días sin commits), hay que relanzarlo a mano una vez desde la
-  pestaña Actions.
+Sprint 0 cerrado: Next.js+Tailwind+shadcn/ui, esquema Prisma completo con RLS
+en todas las tablas, repo en GitHub desplegado en Vercel, Supabase Auth
+(login/registro/confirmación por email) verificado de punta a punta en
+producción, layout con sidebar. Cron keep-alive de GitHub Actions
+(`.github/workflows/keepalive.yml`, cada 3 días contra `GET /api/keepalive`,
+ruta pública vía anon key); si GitHub lo desactiva por inactividad del repo
+(~60 días sin commits) hay que relanzarlo a mano desde la pestaña Actions.
 
-Sprint 1 completo (pendiente solo de que el usuario confirme el guardado real
-con su sesión — ver sección de arriba):
-- ✅ CRUD de cuentas (`src/features/accounts`, `/cuentas`): crear, editar, eliminar,
-  agrupadas en Activos/Pasivos con subtotal. Verificado en producción por el usuario.
-- ✅ CRUD de categorías (`src/features/categories`, `/categorias`): crear, editar,
-  eliminar; jerarquía a 2 niveles, tipo ingreso/gasto, etiqueta 50/30/20 opcional.
-  Se siembra un set de categorías por defecto la primera vez que el usuario visita
-  `/categorias` o `/transacciones` (`ensureDefaultCategories`).
-- ✅ CRUD de transacciones (`src/features/transactions`, `/transacciones`): crear,
-  editar, eliminar; selector de cuenta, categoría (jerárquica, filtrada por
-  ingreso/gasto) y etiquetas libres (se crean al vuelo, tabla `tags` +
-  `transaction_tags`). El formulario pide tipo (ingreso/gasto) + importe positivo
-  y la acción calcula el signo (`amount`); la divisa se toma de la cuenta elegida.
-- ✅ Reglas de auto-categorización (`src/features/categorization-rules`, `/reglas`):
-  `merchant_contains` o `description_regex`, con prioridad (mayor primero). Se
-  aplican en `upsertTransaction` solo cuando el usuario no elige categoría a mano.
-- ✅ División de transacciones (`transaction_splits`): checkbox "Dividir en varias
-  categorías" en el diálogo de transacción, filas dinámicas categoría+importe+nota,
-  validación en cliente (el botón Guardar se desactiva si no cuadra la suma) y en
-  servidor. Una transacción dividida guarda `category_id = null` e `is_split = true`;
-  la lista de transacciones muestra las categorías de la división en vez de una sola.
-- ✅ Conversión de divisa real (`src/lib/fx.ts`, Frankfurter, `api.frankfurter.dev`):
-  cachea el tipo de cambio en `fx_rates` por fecha+base+quote y calcula `amount_eur`
-  real. Si Frankfurter falla, hace fallback a `fx_rate = 1` en vez de bloquear el
-  guardado (ver comentario en el propio archivo). No es lógica financiera pura
-  (hace red + caché en BD), por eso vive en `src/lib/fx.ts` y no en `src/lib/finance/`.
-- ✅ Detección básica de recurrentes: al crear una transacción con comercio, si ya
-  hay 3+ transacciones del mismo usuario con mismo comercio+importe+divisa, se
-  marcan todas `is_recurring = true` con un `recurring_group_id` compartido
-  (icono de repetición en la lista). Heurística simple, sin UI para gestionar
-  grupos todavía.
+Sprint 1 completo — CRUD base, verificado en producción por el usuario:
+- ✅ Cuentas (`/cuentas`) multi-divisa, agrupadas en Activos/Pasivos.
+- ✅ Categorías (`/categorias`) a 2 niveles, tipo ingreso/gasto, etiqueta
+  50/30/20 opcional; se siembra un set por defecto la primera vez
+  (`ensureDefaultCategories`).
+- ✅ Transacciones (`/transacciones`): categoría jerárquica, etiquetas libres,
+  y división en varias categorías (`transaction_splits`: la transacción padre
+  guarda `category_id=null`+`is_split=true`).
+- ✅ Reglas de auto-categorización (`/reglas`, `merchant_contains`/
+  `description_regex` por prioridad), aplicadas solo si el usuario no elige
+  categoría a mano.
+- ✅ Conversión de divisa real (`src/lib/fx.ts`, Frankfurter, cacheada en
+  `fx_rates`, fallback a `fx_rate=1` si la API falla).
+- ✅ Detección básica de recurrentes (3+ transacciones iguales de
+  comercio+importe+divisa ⇒ `is_recurring`+`recurring_group_id` compartido).
 
 Sprint 2 completo — Dashboard con KPIs (`src/features/dashboard`, `/dashboard`):
 - ✅ `src/lib/finance/kpis.ts`: funciones puras (cash flow, tasa de ahorro, ratio de
@@ -189,8 +165,31 @@ Sprint 3 completo — Presupuestos y objetivos (`src/features/budgets`,
   `toISOString().slice(0,10)`, que en España podía dar el día de ayer (ver la
   nota en Convenciones sobre `src/lib/date.ts`).
 
-Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 3. Siguiente
-en orden estricto: **Sprint 4 — Deudas con simuladores** (CRUD de deudas,
-avalancha vs. bola de nieve, comparativa de meses e intereses ahorrados). El
-CRUD de deudas hará que el DTI del dashboard (Sprint 2) empiece a dar datos
-reales sin tocarlo.
+Sprint 4 completo — Deudas con simuladores (`src/features/debts`, `/deudas`):
+- ✅ CRUD de deudas (`Debt`). **`interest_rate`/`apr` se guardan como puntos
+  porcentuales (19.5 = 19,5%), no como fracción** — es como el usuario los ve
+  en el papel de su préstamo/tarjeta.
+- ✅ `src/lib/finance/debts.ts`: motor de amortización mes a mes puro
+  (`simulateDebtPayoff`, `compareDebtStrategies`). Avalancha ordena por TIN
+  descendente, bola de nieve por saldo ascendente; el extra mensual (más las
+  cuotas que se liberan al saldar una deuda) se dirige a la primera deuda
+  activa del orden, con cascada al resto de deudas **dentro del mismo mes**
+  si sobra. Detecta amortización negativa (cuota que no cubre el interés) y
+  tiene un tope de seguridad de 600 meses para no simular para siempre.
+- 🐛 Bug real encontrado con los tests: si la deuda que se saldaba con
+  sobrante era la última del orden, ese sobrante se descartaba en vez de
+  pasar al mes siguiente — con pocas deudas y sin extra mensual, eso podía
+  hacer que avalancha saliera (mal) más cara que bola de nieve, violando la
+  propiedad matemática de que avalancha nunca es peor. Corregido: el
+  sobrante no usado en el mes se sube al fondo "extra" permanente.
+- ✅ `DebtSimulator` (cliente): recalcula en vivo al cambiar el extra mensual,
+  sin pasar por el servidor (la función es pura, se ejecuta en el navegador).
+  El "orden" que muestra cada tarjeta es el orden **real de liquidación**
+  (cuándo se salda cada deuda), que solo coincide con la prioridad de la
+  estrategia cuando hay extra suficiente para que el orden importe.
+- ✅ El DTI del dashboard (Sprint 2, `dtiPct` con `debts.minimum_payment`)
+  ya da datos reales en cuanto hay deudas, sin haber tocado ese código.
+
+Con esto termina el roadmap de `docs/plan-tecnico.md` hasta Sprint 4. Siguiente
+en orden estricto: **Sprint 5 — Inversiones con TWR/XIRR** (holdings,
+precios cacheados, XIRR con librería, TWR a mano, asignación de activos).

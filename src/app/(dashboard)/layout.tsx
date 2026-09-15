@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowLeftRight,
+  CreditCard,
   LayoutDashboard,
   LogOut,
   PiggyBank,
@@ -92,6 +93,12 @@ export default async function DashboardLayout({
                   <SidebarMenuButton render={<Link href="/objetivos" />}>
                     <Target />
                     <span>Objetivos</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton render={<Link href="/deudas" />}>
+                    <CreditCard />
+                    <span>Deudas</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
